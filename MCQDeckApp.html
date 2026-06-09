@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCQDeck — Flashcard Quiz App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0a0f;
+  --surface:  #13131a;
+  --card:     #1a1a24;
+  --border:   #2a2a38;
+  --text:     #e8e8f0;
+  --muted:    #6b6b80;
+  --blue:     #4f7dff;
+  --blue-dim: #1e2d5a;
+  --green:    #22c55e;
+  --green-dim:#0f2e1c;
+  --red:      #ef4444;
+  --red-dim:  #2e0f0f;
+  --yellow:   #f59e0b;
+  --radius:   14px;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Syne', sans-serif;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+.app { max-width: 860px; margin: 0 auto; padding: 24px 16px 80px; min-height: 100vh; }
+
+/* Header */
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+.header-logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.header-logo span { color: var(--blue); }
+.header-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-left: auto; }
+
+/* Search */
+.search-wrap { position: relative; margin-bottom: 24px; }
+.search-wrap .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px 12px 42px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; }
+.search-input:focus { border-color: var(--blue); }
+.search-input::placeholder { color: var(--muted); }
+
+/* Deck grid */
+.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.deck-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: border-color .2s, transform .15s; }
+.deck-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+.deck-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.deck-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.deck-stat { display: flex; gap: 12px; margin-top: 10px; }
+.stat-chip { font-size: 11px; font-family: var(--mono); color: var(--muted); background: var(--surface); border-radius: 6px; padding: 3px 8px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, transform .1s; white-space: nowrap; text-decoration: none; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-ghost   { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.btn-danger  { background: var(--red-dim); color: var(--red); border: 1px solid #3d1818; }
+.btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+/* FAB */
+.fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--blue); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px #4f7dff55; transition: transform .15s; z-index: 100; font-size: 28px; line-height: 1; }
+.fab:hover { transform: scale(1.08); }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+.overlay.open { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+
+/* Form */
+.field { margin-bottom: 16px; }
+.label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .5px; }
+.input, .textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; }
+.input:focus, .textarea:focus { border-color: var(--blue); }
+.textarea { resize: vertical; min-height: 80px; }
+.input::placeholder, .textarea::placeholder { color: var(--muted); }
+
+/* Option rows */
+.options-grid { display: grid; gap: 10px; }
+.option-row { display: flex; align-items: center; gap: 10px; }
+.option-key-lbl { font-size: 13px; font-weight: 700; color: var(--blue); font-family: var(--mono); width: 22px; flex-shrink: 0; }
+.option-radio { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; flex-shrink: 0; }
+
+/* Card list */
+.card-list { display: flex; flex-direction: column; gap: 10px; }
+.card-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; }
+.card-num { font-size: 11px; font-family: var(--mono); color: var(--muted); min-width: 28px; padding-top: 2px; }
+.card-q { font-size: 14px; flex: 1; }
+.card-correct { font-size: 11px; color: var(--green); font-family: var(--mono); margin-top: 4px; }
+
+/* Quiz */
+.quiz-wrap { max-width: 640px; margin: 0 auto; }
+.quiz-progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+.quiz-progress-fill { height: 100%; background: var(--blue); border-radius: 2px; transition: width .3s; }
+.quiz-counter { font-size: 12px; font-family: var(--mono); color: var(--muted); margin-bottom: 16px; }
+.quiz-question { font-size: 20px; font-weight: 700; line-height: 1.4; margin-bottom: 24px; }
+.quiz-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.quiz-option { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 18px; cursor: pointer; font-size: 15px; font-weight: 500; transition: border-color .2s, background .2s; display: flex; align-items: center; gap: 12px; text-align: left; font-family: var(--sans); color: var(--text); width: 100%; }
+.quiz-option:hover:not(.answered) { border-color: var(--blue); background: var(--blue-dim); }
+.quiz-option.correct { border-color: var(--green) !important; background: var(--green-dim); animation: glowGreen .5s ease; }
+.quiz-option.wrong   { border-color: var(--red)   !important; background: var(--red-dim);   animation: glowRed   .5s ease; }
+.quiz-option.reveal  { border-color: var(--green) !important; background: var(--green-dim); }
+.opt-key { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--muted); width: 24px; height: 24px; background: var(--surface); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.quiz-explanation { background: var(--surface); border-left: 3px solid var(--blue); border-radius: 10px; padding: 14px 16px; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.quiz-explanation-label { font-size: 11px; font-family: var(--mono); color: var(--blue); font-weight: 700; margin-bottom: 6px; }
+.quiz-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Results */
+.results-wrap { max-width: 480px; margin: 40px auto; text-align: center; }
+.results-title { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+.score-ring { width: 140px; height: 140px; margin: 24px auto; position: relative; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-pct { font-size: 32px; font-weight: 800; font-family: var(--mono); }
+.score-lbl { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.results-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.stat-val { font-size: 26px; font-weight: 800; font-family: var(--mono); }
+.stat-key { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Detail header */
+.detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+.detail-title { font-size: 24px; font-weight: 800; flex: 1; }
+
+/* Empty */
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+.empty-text { font-size: 14px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 10px 20px; border-radius: 40px; font-size: 13px; font-weight: 600; z-index: 999; animation: fadeUp .3s ease; display: none; }
+.toast.show { display: block; }
+
+/* Review */
+.review-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.review-q { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.review-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.review-opt { font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
+.review-opt.correct { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.review-exp { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; line-height: 1.5; }
+
+/* SVG icons */
+svg.icon { vertical-align: middle; }
+
+/* Views */
+.view { display: none; }
+.view.active { display: block; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+@keyframes glowGreen { 0%,100%{box-shadow:none}50%{box-shadow:0 0 20px #22c55e88} }
+@keyframes glowRed   { 0%,100%{box-shadow:none}50%{box-shadow:0 0 20px #ef444488} }
+
+@media(max-width:500px){
+  .results-stats{grid-template-columns:1fr;}
+  .review-options{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME VIEW -->
+  <div id="view-home" class="view active">
+    <div class="header">
+      <div class="header-logo">MCQ<span>Deck</span></div>
+      <span class="header-sub" id="home-deck-count">0 decks</span>
+      <button class="btn btn-ghost btn-sm" onclick="importDeck()">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Import
+      </button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+      </span>
+      <input class="search-input" id="search-input" placeholder="Search decks…" oninput="renderDecks()" />
+    </div>
+    <div class="deck-grid" id="deck-grid"></div>
+    <div class="empty" id="home-empty" style="display:none">
+      <div class="empty-icon">📚</div>
+      <div class="empty-text" id="home-empty-text">No decks yet. Create your first deck!</div>
+    </div>
+    <button class="fab" onclick="openModal('modal-new-deck')" title="New Deck">+</button>
+  </div>
+
+  <!-- DECK DETAIL VIEW -->
+  <div id="view-deck" class="view">
+    <div class="detail-header">
+      <button class="btn btn-ghost btn-sm" onclick="showView('home')">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back
+      </button>
+      <div class="detail-title" id="deck-detail-name"></div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditDeckModal()">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-quiz" onclick="startQuiz(false)">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg> Quiz
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-shuffle" onclick="startQuiz(true)">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg> Shuffle
+      </button>
+    </div>
+    <div class="deck-stat" style="margin-bottom:20px">
+      <span class="stat-chip" id="deck-card-count"></span>
+    </div>
+    <div class="card-list" id="card-list"></div>
+    <div class="empty" id="deck-empty" style="display:none">
+      <div class="empty-icon">🃏</div>
+      <div class="empty-text">No cards yet. Add your first question!</div>
+    </div>
+    <div style="margin-top:24px">
+      <button class="btn btn-primary" onclick="openModal('modal-add-card')">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Card
+      </button>
+    </div>
+  </div>
+
+  <!-- QUIZ VIEW -->
+  <div id="view-quiz" class="view">
+    <div class="quiz-wrap">
+      <button class="btn btn-ghost btn-sm" style="margin-bottom:20px" onclick="exitQuiz()">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Exit
+      </button>
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress" style="width:0%"></div></div>
+      <div class="quiz-counter" id="quiz-counter"></div>
+      <div class="quiz-question" id="quiz-question"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-explanation" id="quiz-explanation" style="display:none">
+        <div class="quiz-explanation-label">EXPLANATION</div>
+        <div id="quiz-explanation-text"></div>
+      </div>
+      <div class="quiz-nav">
+        <button class="btn btn-ghost" id="btn-prev" onclick="quizPrev()">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Prev
+        </button>
+        <button class="btn btn-primary" id="btn-next" onclick="quizNext()" disabled>
+          Next <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div id="view-results" class="view">
+    <div class="results-wrap">
+      <div class="results-title">Quiz Complete!</div>
+      <div style="color:var(--muted);font-size:14px" id="results-deck-name"></div>
+      <div class="score-ring">
+        <svg viewBox="0 0 120 120" width="140" height="140">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="10"/>
+          <circle id="score-arc" cx="60" cy="60" r="54" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 339.3"/>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-pct" id="score-pct">0%</div>
+          <div class="score-lbl">score</div>
+        </div>
+      </div>
+      <div class="results-stats">
+        <div class="stat-box"><div class="stat-val" id="res-total">0</div><div class="stat-key">Total</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--green)" id="res-correct">0</div><div class="stat-key">Correct</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--red)" id="res-wrong">0</div><div class="stat-key">Wrong</div></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="startQuiz(false)">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg> Retry
+        </button>
+        <button class="btn btn-ghost" onclick="showReview()">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM2 10h20"/></svg> Review
+        </button>
+        <button class="btn btn-ghost" onclick="showView('deck')">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back to Deck
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEW VIEW -->
+  <div id="view-review" class="view">
+    <div class="detail-header">
+      <button class="btn btn-ghost btn-sm" onclick="showView('results')">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Results
+      </button>
+      <div class="detail-title">Review All</div>
+    </div>
+    <div id="review-list"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL: New Deck -->
+<div class="overlay" id="modal-new-deck" onclick="overlayClick(event,'modal-new-deck')">
+  <div class="modal">
+    <div class="modal-title">New Deck</div>
+    <div class="field">
+      <label class="label">Deck Name</label>
+      <input class="input" id="new-deck-name" placeholder="e.g. Physics, Mathematics…" onkeydown="if(event.key==='Enter')saveDeckModal()" />
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-deck')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeckModal()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Deck -->
+<div class="overlay" id="modal-edit-deck" onclick="overlayClick(event,'modal-edit-deck')">
+  <div class="modal">
+    <div class="modal-title">Edit Deck</div>
+    <div class="field">
+      <label class="label">Deck Name</label>
+      <input class="input" id="edit-deck-name" placeholder="Deck name…" onkeydown="if(event.key==='Enter')updateDeckModal()" />
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-danger" onclick="deleteDeckModal()">
+        <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-deck')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateDeckModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Card -->
+<div class="overlay" id="modal-add-card" onclick="overlayClick(event,'modal-add-card')">
+  <div class="modal">
+    <div class="modal-title">Add Card</div>
+    <div class="field">
+      <label class="label">Question</label>
+      <textarea class="textarea" id="add-card-q" placeholder="Enter your question…"></textarea>
+    </div>
+    <div class="field">
+      <label class="label">Options — select correct answer</label>
+      <div class="options-grid" id="add-card-opts"></div>
+    </div>
+    <div class="field">
+      <label class="label">Explanation (optional)</label>
+      <textarea class="textarea" id="add-card-exp" placeholder="Explain the correct answer…" style="min-height:70px"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-card')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCardModal()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Card -->
+<div class="overlay" id="modal-edit-card" onclick="overlayClick(event,'modal-edit-card')">
+  <div class="modal">
+    <div class="modal-title">Edit Card</div>
+    <div class="field">
+      <label class="label">Question</label>
+      <textarea class="textarea" id="edit-card-q" placeholder="Enter your question…"></textarea>
+    </div>
+    <div class="field">
+      <label class="label">Options — select correct answer</label>
+      <div class="options-grid" id="edit-card-opts"></div>
+    </div>
+    <div class="field">
+      <label class="label">Explanation (optional)</label>
+      <textarea class="textarea" id="edit-card-exp" placeholder="Explain the correct answer…" style="min-height:70px"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-card')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateCardModal()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'mcq-decks-v1';
+let decks = [];
+let activeDeckId = null;
+let editingCardId = null;
+let quizCards = [];
+let quizIndex = 0;
+let quizAnswers = {}; // cardId -> { selected, correct }
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+// ── Persist ────────────────────────────────────────────────────────────────
+function load() {
+  try { decks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { decks = []; }
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(decks));
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getDeck(id) { return decks.find(d => d.id === (id || activeDeckId)); }
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (name === 'home') renderDecks();
+  if (name === 'deck') renderDeck();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // Auto-focus first input
+  const inp = document.getElementById(id).querySelector('input,textarea');
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function overlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+// ── Home / Decks ───────────────────────────────────────────────────────────
+function renderDecks() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = decks.filter(d => d.name.toLowerCase().includes(q));
+  const grid = document.getElementById('deck-grid');
+  const empty = document.getElementById('home-empty');
+  document.getElementById('home-deck-count').textContent = decks.length + ' deck' + (decks.length !== 1 ? 's' : '');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = '';
+    document.getElementById('home-empty-text').textContent = q ? 'No decks match your search.' : 'No decks yet. Create your first deck!';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = filtered.map(deck => `
+    <div class="deck-card" onclick="openDeck('${deck.id}')">
+      <div class="deck-title">${esc(deck.name)}</div>
+      <div class="deck-stat"><span class="stat-chip">${deck.cards.length} card${deck.cards.length !== 1 ? 's' : ''}</span></div>
+      <div class="deck-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-primary btn-sm" onclick="quickQuiz('${deck.id}',false)" ${deck.cards.length===0?'disabled':''}>
+          ▶ Quiz
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="openDeckEditFromHome('${deck.id}')">✎</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportDeck('${deck.id}')">↓</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDeckById('${deck.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openDeck(id) {
+  activeDeckId = id;
+  showView('deck');
+}
+
+function renderDeck() {
+  const deck = getDeck();
+  if (!deck) return;
+  document.getElementById('deck-detail-name').textContent = deck.name;
+  document.getElementById('deck-card-count').textContent = deck.cards.length + ' card' + (deck.cards.length !== 1 ? 's' : '');
+  document.getElementById('btn-quiz').disabled = deck.cards.length === 0;
+  document.getElementById('btn-shuffle').disabled = deck.cards.length === 0;
+
+  const list = document.getElementById('card-list');
+  const empty = document.getElementById('deck-empty');
+  if (deck.cards.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  list.innerHTML = deck.cards.map((c, i) => `
+    <div class="card-item">
+      <div class="card-num">#${i+1}</div>
+      <div style="flex:1">
+        <div class="card-q">${esc(c.question)}</div>
+        <div class="card-correct">✓ ${esc(c.options[c.correctIndex])}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="padding:5px 8px" onclick="openEditCard('${c.id}')">✎</button>
+      <button class="btn btn-danger btn-sm" style="padding:5px 8px" onclick="deleteCard('${c.id}')">🗑</button>
+    </div>
+  `).join('');
+}
+
+// ── Deck CRUD ──────────────────────────────────────────────────────────────
+function saveDeckModal() {
+  const name = document.getElementById('new-deck-name').value.trim();
+  if (!name) return;
+  decks.push({ id: uid(), name, cards: [], createdAt: Date.now() });
+  save(); closeModal('modal-new-deck');
+  document.getElementById('new-deck-name').value = '';
+  renderDecks(); showToast('Deck created!');
+}
+
+function openEditDeckModal() {
+  const deck = getDeck();
+  document.getElementById('edit-deck-name').value = deck.name;
+  openModal('modal-edit-deck');
+}
+function openDeckEditFromHome(id) {
+  activeDeckId = id;
+  openEditDeckModal();
+}
+function updateDeckModal() {
+  const name = document.getElementById('edit-deck-name').value.trim();
+  if (!name) return;
+  const deck = getDeck();
+  deck.name = name;
+  save(); closeModal('modal-edit-deck');
+  renderDecks(); renderDeck(); showToast('Deck renamed!');
+}
+function deleteDeckModal() {
+  if (!confirm('Delete this deck and all its cards?')) return;
+  deleteDeckById(activeDeckId);
+  closeModal('modal-edit-deck');
+  showView('home');
+}
+function deleteDeckById(id) {
+  decks = decks.filter(d => d.id !== id);
+  save(); renderDecks();
+  showToast('Deck deleted.');
+}
+
+// ── Card CRUD ──────────────────────────────────────────────────────────────
+const LETTERS = ['A','B','C','D'];
+
+function buildOptionRows(containerId, vals, correctIdx) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = LETTERS.map((l, i) => `
+    <div class="option-row">
+      <input type="radio" class="option-radio" name="${containerId}-correct" value="${i}" ${i===correctIdx?'checked':''} />
+      <span class="option-key-lbl">${l}</span>
+      <input class="input" style="flex:1" value="${esc(vals[i]||'')}" placeholder="Option ${l}" id="${containerId}-opt-${i}" />
+    </div>
+  `).join('');
+}
+
+function openAddCard() {
+  buildOptionRows('add-card-opts', ['','','',''], 0);
+  document.getElementById('add-card-q').value = '';
+  document.getElementById('add-card-exp').value = '';
+  openModal('modal-add-card');
+}
+
+function saveCardModal() {
+  const q = document.getElementById('add-card-q').value.trim();
+  const opts = LETTERS.map((_,i) => document.getElementById('add-card-opts-opt-'+i).value.trim());
+  const correctEl = document.querySelector('input[name="add-card-opts-correct"]:checked');
+  const correct = correctEl ? parseInt(correctEl.value) : 0;
+  const exp = document.getElementById('add-card-exp').value.trim();
+  if (!q || opts.some(o => !o)) { alert('Please fill in the question and all options.'); return; }
+  const deck = getDeck();
+  deck.cards.push({ id: uid(), question: q, options: opts, correctIndex: correct, explanation: exp });
+  save(); closeModal('modal-add-card'); renderDeck(); showToast('Card added!');
+}
+
+function openEditCard(cardId) {
+  editingCardId = cardId;
+  const deck = getDeck();
+  const card = deck.cards.find(c => c.id === cardId);
+  document.getElementById('edit-card-q').value = card.question;
+  document.getElementById('edit-card-exp').value = card.explanation || '';
+  buildOptionRows('edit-card-opts', card.options, card.correctIndex);
+  openModal('modal-edit-card');
+}
+
+function updateCardModal() {
+  const q = document.getElementById('edit-card-q').value.trim();
+  const opts = LETTERS.map((_,i) => document.getElementById('edit-card-opts-opt-'+i).value.trim());
+  const correctEl = document.querySelector('input[name="edit-card-opts-correct"]:checked');
+  const correct = correctEl ? parseInt(correctEl.value) : 0;
+  const exp = document.getElementById('edit-card-exp').value.trim();
+  if (!q || opts.some(o => !o)) { alert('Please fill in the question and all options.'); return; }
+  const deck = getDeck();
+  const idx = deck.cards.findIndex(c => c.id === editingCardId);
+  deck.cards[idx] = { ...deck.cards[idx], question: q, options: opts, correctIndex: correct, explanation: exp };
+  save(); closeModal('modal-edit-card'); renderDeck(); showToast('Card updated!');
+}
+
+function deleteCard(cardId) {
+  const deck = getDeck();
+  deck.cards = deck.cards.filter(c => c.id !== cardId);
+  save(); renderDeck();
+}
+
+// ── Quiz ───────────────────────────────────────────────────────────────────
+function startQuiz(doShuffle) {
+  const deck = getDeck();
+  quizCards = [...deck.cards];
+  if (doShuffle) quizCards = quizCards.sort(() => Math.random() - 0.5);
+  quizIndex = 0;
+  quizAnswers = {};
+  showView('quiz');
+  renderQuizCard();
+}
+function quickQuiz(id, doShuffle) {
+  activeDeckId = id;
+  startQuiz(doShuffle);
+}
+
+function renderQuizCard() {
+  const card = quizCards[quizIndex];
+  const total = quizCards.length;
+  const pct = (quizIndex / total) * 100;
+  const answered = quizAnswers[card.id];
+
+  document.getElementById('quiz-progress').style.width = pct + '%';
+  document.getElementById('quiz-counter').textContent = `Question ${quizIndex+1} of ${total}`;
+  document.getElementById('quiz-question').textContent = card.question;
+
+  const optContainer = document.getElementById('quiz-options');
+  optContainer.innerHTML = card.options.map((opt, i) => {
+    let cls = 'quiz-option';
+    if (answered) {
+      cls += ' answered';
+      if (i === card.correctIndex) cls += ' correct';
+      else if (answered.selected === i) cls += ' wrong';
+    }
+    return `<button class="${cls}" onclick="selectAnswer(${i})">
+      <span class="opt-key">${LETTERS[i]}</span>${esc(opt)}
+    </button>`;
+  }).join('');
+
+  const expBox = document.getElementById('quiz-explanation');
+  if (answered && card.explanation) {
+    document.getElementById('quiz-explanation-text').textContent = card.explanation;
+    expBox.style.display = '';
+  } else {
+    expBox.style.display = 'none';
+  }
+
+  document.getElementById('btn-prev').disabled = quizIndex === 0;
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.disabled = !answered;
+  nextBtn.textContent = (quizIndex + 1 === total) ? 'Finish ›' : 'Next ›';
+}
+
+function selectAnswer(idx) {
+  const card = quizCards[quizIndex];
+  if (quizAnswers[card.id]) return;
+  quizAnswers[card.id] = { selected: idx, correct: idx === card.correctIndex };
+  renderQuizCard();
+}
+
+function quizNext() {
+  if (quizIndex + 1 >= quizCards.length) { showResults(); return; }
+  quizIndex++;
+  renderQuizCard();
+}
+function quizPrev() {
+  if (quizIndex === 0) return;
+  quizIndex--;
+  renderQuizCard();
+}
+function exitQuiz() { showView('deck'); }
+
+// ── Results ────────────────────────────────────────────────────────────────
+function showResults() {
+  const total = quizCards.length;
+  const correct = Object.values(quizAnswers).filter(a => a.correct).length;
+  const wrong = total - correct;
+  const pct = Math.round((correct / total) * 100);
+  const r = 54, circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  const color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+
+  document.getElementById('results-deck-name').textContent = getDeck()?.name || '';
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('score-pct').style.color = color;
+  const arc = document.getElementById('score-arc');
+  arc.setAttribute('stroke', color);
+  arc.setAttribute('stroke-dasharray', `${dash} ${circ}`);
+  document.getElementById('res-total').textContent = total;
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent = wrong;
+  showView('results');
+}
+
+function showReview() {
+  const list = document.getElementById('review-list');
+  list.innerHTML = quizCards.map((card, i) => `
+    <div class="review-card">
+      <div class="review-q"><span style="color:var(--muted);font-family:var(--mono);font-size:11px">Q${i+1}. </span>${esc(card.question)}</div>
+      <div class="review-options">
+        ${card.options.map((opt, j) => `
+          <div class="review-opt${j===card.correctIndex?' correct':''}">
+            <span style="font-family:var(--mono);font-size:11px">${LETTERS[j]}.</span> ${esc(opt)}
+          </div>
+        `).join('')}
+      </div>
+      ${card.explanation ? `<div class="review-exp">${esc(card.explanation)}</div>` : ''}
+    </div>
+  `).join('');
+  showView('review');
+}
+
+// ── Export / Import ────────────────────────────────────────────────────────
+function exportDeck(id) {
+  const deck = getDeck(id);
+  const blob = new Blob([JSON.stringify(deck, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = deck.name.replace(/\s+/g,'_') + '.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importDeck() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const deck = JSON.parse(ev.target.result);
+        if (!deck.name || !Array.isArray(deck.cards)) throw new Error('Invalid');
+        decks.push({ ...deck, id: uid() });
+        save(); renderDecks(); showToast('Deck imported!');
+      } catch { showToast('Import failed — invalid file.'); }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+// ── Escape HTML ────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+load();
+renderDecks();
+
+// Wire up the "Add Card" button in modal open
+document.getElementById('modal-add-card').addEventListener('transitionend', () => {});
+// Patch: open add card builds options fresh
+const origOpen = window.openModal;
+window.openModal = function(id) {
+  if (id === 'modal-add-card') {
+    buildOptionRows('add-card-opts', ['','','',''], 0);
+    document.getElementById('add-card-q').value = '';
+    document.getElementById('add-card-exp').value = '';
+  }
+  origOpen(id);
+};
+</script>
+</body>
+</html>
