@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MCQDeck — Study Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea']}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070d0e;--surface:#0e1a1b;--card:#132224;--border:#1f3a3c;
+  --text:#e6fbf9;--muted:#5f8a8c;--blue:#2dd4bf;--blue-dim:#0f3937;
+  --green:#22c55e;--green-dim:#0f2e1c;--red:#ef4444;--red-dim:#2e0f0f;
+  --yellow:#f59e0b;--yellow-dim:#2d2000;--purple:#a855f7;--purple-dim:#1e0a38;
+  --copper:#3fc6c0;--copper-dim:#0f3937;
+  --radius:14px;--sidebar:240px;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex}
+
+/*── Sidebar ──*/
+.sidebar{width:var(--sidebar);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:300;transition:transform .25s}
+.sidebar.collapsed{transform:translateX(-100%)}
+.sidebar-logo{padding:22px 20px 14px;font-size:20px;font-weight:800;letter-spacing:-.5px;border-bottom:1px solid var(--border)}
+.sidebar-logo span{color:var(--blue)}
+.sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+.nav-section{font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:14px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:14px;font-weight:600;transition:background .15s,color .15s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--card);color:var(--blue)}
+.nav-item.active{background:var(--blue-dim);color:var(--blue);border-left-color:var(--blue)}
+.nav-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+/*── Main ──*/
+.main{margin-left:var(--sidebar);flex:1;min-height:100vh;transition:margin .25s}
+.main.expanded{margin-left:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
+.topbar-title{font-size:17px;font-weight:800;flex:1}
+.hamburger{background:none;border:none;color:var(--text);cursor:pointer;font-size:21px;padding:5px 9px;border-radius:8px;transition:background .15s}
+.hamburger:hover{background:var(--surface)}
+.page{padding:22px;display:none;max-width:920px}
+.page.active{display:block}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:290}
+.sidebar-overlay.show{display:block}
+
+/*── Buttons ──*/
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .1s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid #3d1818}
+.btn-yellow{background:var(--yellow-dim);color:var(--yellow);border:1px solid #4d3800}
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid #1a4a2e}
+.btn-purple{background:var(--purple-dim);color:var(--purple);border:1px solid #3a1060}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.section-title{font-size:12px;font-weight:700;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+
+/*── Modal ──*/
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto}
+.modal-title{font-size:19px;font-weight:800;margin-bottom:18px}
+
+/*── Form ──*/
+.field{margin-bottom:15px}
+.label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.6px}
+.input,.textarea,.sel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .2s}
+.input:focus,.textarea:focus,.sel:focus{border-color:var(--blue)}
+.textarea{resize:vertical;min-height:80px}
+.input::placeholder,.textarea::placeholder{color:var(--muted)}
+
+/*── Rich Editor ──*/
+.editor-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.rich-toolbar{display:flex;flex-wrap:wrap;gap:3px;padding:7px 8px;background:var(--bg);border-bottom:1px solid var(--border)}
+.rb{padding:4px 8px;border-radius:5px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;min-width:28px;text-align:center;font-family:var(--sans)}
+.rb:hover{border-color:var(--blue);color:var(--blue)}
+.rb.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.rb-sep{width:1px;background:var(--border);margin:2px 4px;align-self:stretch}
+.rich-editor{min-height:90px;background:var(--surface);padding:10px 13px;color:var(--text);font-size:14px;line-height:1.65;outline:none;cursor:text}
+.rich-editor:empty::before{content:attr(data-ph);color:var(--muted);pointer-events:none}
+.rich-editor b,.rich-editor strong{font-weight:700}
+.rich-editor i,.rich-editor em{font-style:italic}
+.rich-editor u{text-decoration:underline}
+.rich-editor s{text-decoration:line-through}
+.rich-editor sup{font-size:.75em;vertical-align:super}
+.rich-editor sub{font-size:.75em;vertical-align:sub}
+
+/*── Symbol Panel ──*/
+.sym-panel-wrap{margin-top:6px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sym-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border)}
+.sym-tab{flex:1;padding:7px 4px;border:none;background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.sym-tab.active{background:var(--blue-dim);color:var(--blue)}
+.sym-body{padding:8px;display:none}
+.sym-body.active{display:flex;flex-wrap:wrap;gap:4px}
+.sym-btn{padding:3px 9px;border-radius:5px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.sym-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+
+/*── Options ──*/
+.options-grid{display:grid;gap:9px}
+.option-row{display:flex;align-items:center;gap:10px}
+.option-key-lbl{font-size:13px;font-weight:700;color:var(--blue);font-family:var(--mono);width:20px;flex-shrink:0}
+.option-radio{width:17px;height:17px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.option-editor{flex:1;min-height:38px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:14px;line-height:1.4;outline:none;cursor:text;transition:border-color .15s}
+.option-editor:focus{border-color:var(--blue)}
+.option-editor:empty::before{content:attr(data-ph);color:var(--muted);pointer-events:none}
+
+/*── Image ──*/
+.img-drop{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s}
+.img-drop:hover{border-color:var(--blue)}
+.img-preview{max-width:100%;max-height:180px;border-radius:8px;margin-top:8px;display:none}
+.img-remove{font-size:11px;color:var(--red);cursor:pointer;margin-top:5px;display:none}
+
+/*── Search ──*/
+.search-wrap{position:relative;margin-bottom:20px}
+.search-icon-abs{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px 10px 40px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--blue)}
+.search-input::placeholder{color:var(--muted)}
+
+/*── Deck grid ──*/
+.deck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.deck-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:border-color .2s,transform .15s}
+.deck-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.deck-title{font-size:16px;font-weight:700;margin-bottom:5px}
+.deck-meta{font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:12px}
+.deck-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/*── Card list ──*/
+.card-list{display:flex;flex-direction:column;gap:9px}
+.card-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 15px;display:flex;align-items:flex-start;gap:12px}
+.card-num{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:26px;padding-top:2px}
+.card-q{font-size:14px;flex:1;line-height:1.5}
+.card-ans{font-size:11px;color:var(--green);font-family:var(--mono);margin-top:3px}
+.card-thumb{width:46px;height:34px;object-fit:cover;border-radius:6px;flex-shrink:0}
+
+/*── Quiz ──*/
+.quiz-wrap{max-width:660px;margin:0 auto}
+.quiz-topbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.quiz-timer-box{display:flex;flex-direction:column;align-items:center;gap:3px}
+.quiz-timer{font-family:var(--mono);font-size:15px;color:var(--yellow);background:var(--yellow-dim);border:1px solid #4d3800;padding:5px 14px;border-radius:8px;min-width:68px;text-align:center;font-weight:700}
+.quiz-timer.urgent{color:var(--red);background:var(--red-dim);border-color:#5a1010;animation:pulse 1s infinite}
+.quiz-q-time{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.quiz-progress-bar{height:5px;background:var(--border);border-radius:3px;margin-bottom:18px;overflow:hidden}
+.quiz-progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .4s}
+.quiz-counter{font-size:12px;font-family:var(--mono);color:var(--muted);margin-bottom:13px}
+.quiz-question{font-size:19px;font-weight:700;line-height:1.45;margin-bottom:13px}
+.quiz-img{max-width:100%;max-height:240px;border-radius:10px;margin-bottom:16px;display:block}
+.quiz-options{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.quiz-option{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;transition:border-color .2s,background .2s;display:flex;align-items:center;gap:12px;text-align:left;font-family:var(--sans);color:var(--text);width:100%}
+.quiz-option:hover:not(.answered){border-color:var(--blue);background:var(--blue-dim)}
+.quiz-option.correct{border-color:var(--green)!important;background:var(--green-dim);animation:glowGreen .5s ease}
+.quiz-option.wrong{border-color:var(--red)!important;background:var(--red-dim);animation:glowRed .5s ease}
+.opt-key{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);width:22px;height:22px;background:var(--surface);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.quiz-exp-box{background:var(--surface);border-left:3px solid var(--blue);border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.6;margin-bottom:18px}
+.quiz-exp-label{font-size:10px;font-family:var(--mono);color:var(--blue);font-weight:700;margin-bottom:5px}
+.quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/*── Results ──*/
+.results-wrap{max-width:520px;margin:24px auto;text-align:center}
+.results-title{font-size:28px;font-weight:800;margin-bottom:5px}
+.score-ring{width:140px;height:140px;margin:18px auto;position:relative}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-pct{font-size:28px;font-weight:800;font-family:var(--mono)}
+.score-lbl{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.results-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.stat-val{font-size:22px;font-weight:800;font-family:var(--mono)}
+.stat-key{font-size:10px;color:var(--muted);margin-top:3px}
+
+/*── Per-question time bar ──*/
+.time-bars{margin-top:20px;text-align:left}
+.time-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;font-family:var(--mono)}
+.time-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.time-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+
+/*── Progress ──*/
+.progress-table{width:100%;border-collapse:collapse}
+.progress-table th,.progress-table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.progress-table th{color:var(--muted);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.prog-bar-mini{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+.prog-bar-mini-fill{height:100%;border-radius:3px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:600}
+.badge-green{background:var(--green-dim);color:var(--green)}
+.badge-yellow{background:var(--yellow-dim);color:var(--yellow)}
+.badge-red{background:var(--red-dim);color:var(--red)}
+
+/*── Review ──*/
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.review-q{font-size:14px;font-weight:600;margin-bottom:9px;line-height:1.4}
+.review-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px}
+.review-opt{font-size:12px;padding:7px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border)}
+.review-opt.correct{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.review-exp{font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:9px;margin-top:9px;line-height:1.5}
+.review-img{max-width:100%;max-height:160px;border-radius:8px;margin-bottom:9px}
+.time-chip{font-size:10px;font-family:var(--mono);color:var(--muted);background:var(--surface);border-radius:5px;padding:2px 7px;margin-left:8px}
+
+/*── Tab strip ──*/
+.tab-strip{display:flex;gap:3px;background:var(--surface);border-radius:10px;padding:4px;margin-bottom:16px}
+.tab-btn{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;border-radius:7px;transition:background .2s,color .2s}
+.tab-btn.active{background:var(--blue);color:#fff}
+
+/*── CSV hint ──*/
+.hint-box{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.8;background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+
+/*── Deck checkbox ──*/
+.deck-check-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;cursor:pointer;margin-bottom:8px;transition:border-color .15s}
+.deck-check-row:hover{border-color:var(--blue)}
+.deck-check-row input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+
+/*── Mind Maps ──*/
+.mm-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.mm-color-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:transform .12s,border-color .12s}
+.mm-color-dot:hover{transform:scale(1.15)}
+.mm-canvas-wrap{width:100%;height:calc(100vh - 230px);min-height:420px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;cursor:grab}
+.mm-canvas-wrap.panning{cursor:grabbing}
+.mm-canvas{width:100%;height:100%;display:block}
+.mm-node-rect{cursor:pointer;transition:filter .12s}
+.mm-node-rect:hover{filter:brightness(1.15)}
+.mm-node-text{fill:#0a0f0f;font-family:var(--sans);font-weight:700;font-size:13px;pointer-events:none;user-select:none}
+.mm-edge{stroke:var(--border);stroke-width:2.5;fill:none}
+.mm-node-selected{stroke:#fff;stroke-width:3}
+
+/*── Vault ──*/
+.vault-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s}
+.vault-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.vault-thumb{width:100%;height:130px;background:var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.vault-thumb img{width:100%;height:100%;object-fit:cover}
+.vault-meta{padding:10px 12px}
+.vault-name{font-size:13px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.vault-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;display:flex;justify-content:space-between;align-items:center}
+.vault-del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:2px}
+.vault-del-btn:hover{color:var(--red)}
+.note-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color .2s,transform .15s;display:flex;flex-direction:column}
+.note-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.note-card-title{font-size:14px;font-weight:800;margin-bottom:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.note-card-snippet{font-size:12px;color:var(--muted);line-height:1.5;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.note-card-time{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:8px}
+.week-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:6px}
+.week-chart{width:100%;height:240px;display:block}
+.wc-bar{fill:var(--blue);transition:fill .15s,opacity .15s}
+.wc-bar:hover{fill:#5eead4;opacity:.92}
+.wc-axis{stroke:var(--border);stroke-width:1}
+.wc-grid{stroke:var(--border);stroke-width:1;stroke-dasharray:3 4;opacity:.6}
+.wc-label{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.wc-value{fill:var(--text);font-family:var(--mono);font-size:10px;font-weight:700}
+
+/*── Doubt Solver ──*/
+.doubt-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.doubt-engine-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.doubt-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+.doubt-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;transition:border-color .15s,transform .12s}
+.doubt-item:hover{border-color:var(--blue);transform:translateX(2px)}
+.doubt-item-text{flex:1;font-size:13.5px;line-height:1.4;cursor:pointer}
+.doubt-item-time{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.doubt-item-actions{display:flex;gap:5px;flex-shrink:0}
+.doubt-mini-btn{background:var(--card);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:border-color .15s,background .15s}
+.doubt-mini-btn:hover{border-color:var(--blue);background:var(--blue-dim)}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-month{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day-label{text-align:center;font-size:11px;font-family:var(--mono);color:var(--muted);padding:6px 0;text-transform:uppercase;letter-spacing:.5px}
+.cal-day{min-height:96px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px;cursor:pointer;transition:border-color .15s,transform .15s,background .15s;position:relative}
+.cal-day:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 16px #2dd4bf22}
+.cal-day.today{border-color:var(--blue);background:var(--blue-dim)}
+.cal-day.today .cal-date{color:var(--blue)}
+.cal-day.other-month{opacity:.3}
+.cal-day.has-event::after{content:'';position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:5px;height:5px;background:var(--blue);border-radius:50%}
+.cal-date{font-size:13px;font-weight:700;font-family:var(--mono);margin-bottom:4px}
+.cal-evt-chip{font-size:10px;border-radius:5px;padding:2px 6px;margin-bottom:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:transform .1s}
+.cal-evt-chip:hover{transform:translateX(2px)}
+.cal-day-hint{font-size:9px;color:var(--muted);opacity:0;transition:opacity .15s;position:absolute;top:6px;right:7px}
+.cal-day:hover .cal-day-hint{opacity:1}
+
+/*── Icons ──*/
+.math-preview-label{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:8px;margin-bottom:4px}
+.math-preview{padding:9px 11px;background:var(--card);border:1px dashed var(--border);border-radius:8px;font-size:14px;line-height:1.5;min-height:22px;color:var(--text)}
+.math-preview:empty::before{content:'Nothing to preview yet';color:var(--muted);font-size:12px}
+.math-preview .opt-preview-row{font-size:13px;margin-bottom:4px;display:flex;gap:6px}
+.math-preview .opt-preview-row b{color:var(--blue);flex-shrink:0}
+.icon{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2.5px;flex-shrink:0}
+.icon-lg{width:38px;height:38px;stroke-width:1.6}
+.nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/*── Color swatches ──*/
+.color-swatch-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-swatch-lbl{cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);transition:border-color .15s,transform .1s}
+.color-swatch-lbl:hover{transform:translateY(-1px)}
+.color-swatch-lbl input{accent-color:var(--blue);margin:0}
+.color-swatch-lbl input:checked{outline:none}
+.color-swatch-lbl:has(input:checked){border-color:var(--blue);background:var(--blue-dim)}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0;box-shadow:0 0 0 2px #00000033 inset}
+
+/*── Day View ──*/
+#modal-add-event{z-index:560}
+.dayview-modal{max-width:680px}
+.dayview-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.dayview-date{font-size:18px;font-weight:800;flex:1}
+.dayview-body{border:1px solid var(--border);border-radius:12px;max-height:60vh;overflow-y:auto;background:var(--surface);position:relative}
+.dayview-timeline{position:relative}
+.dv-hour-row{display:flex;height:60px;border-bottom:1px solid var(--border)}
+.dv-hour-row:last-child{border-bottom:none}
+.dv-hour-label{width:64px;flex-shrink:0;font-size:10px;font-family:var(--mono);color:var(--muted);padding:4px 8px;text-align:right;user-select:none}
+.dv-hour-slot{flex:1;position:relative;cursor:pointer;transition:background .12s}
+.dv-hour-slot:hover{background:var(--blue-dim)}
+.dv-hour-slot::after{content:'';position:absolute;top:50%;left:0;right:0;border-top:1px dashed var(--border)}
+.dv-now-line{position:absolute;left:64px;right:6px;height:2px;background:var(--red);z-index:5;border-radius:2px}
+.dv-now-line::before{content:'';position:absolute;left:-5px;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--red)}
+.dv-event{position:absolute;left:68px;right:8px;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;overflow:hidden;cursor:pointer;border-left:3px solid;animation:dvEventIn .25s ease;transition:transform .12s,box-shadow .12s;z-index:3}
+.dv-event:hover{transform:translateX(3px) scale(1.01);box-shadow:0 4px 14px #00000055;z-index:6}
+.dv-event-time{font-size:9px;font-family:var(--mono);opacity:.8;display:block}
+.dv-add-hint{position:fixed;pointer-events:none;font-size:10px;font-family:var(--mono);background:var(--card);border:1px solid var(--border);padding:3px 8px;border-radius:6px;z-index:50;display:none}
+
+/*── Animations ──*/
+@keyframes dvEventIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(540deg);opacity:.3}}
+@keyframes modalPop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes pageFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.overlay.open .modal{animation:modalPop .22s cubic-bezier(.2,.9,.3,1.2)}
+.page.active{animation:pageFade .28s ease}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 #2dd4bf66}50%{box-shadow:0 0 0 5px #2dd4bf00}}
+.cal-day.today::before{content:'';position:absolute;top:6px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulseDot 2s infinite}
+.events-list{display:flex;flex-direction:column;gap:9px}
+.event-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px}
+.event-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.event-title{font-size:14px;font-weight:600}
+.event-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+
+/*── To-Do ──*/
+.todo-input-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.todo-list{display:flex;flex-direction:column;gap:8px}
+.todo-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:12px;transition:opacity .2s}
+.todo-item.done{opacity:.45}
+.todo-cb{width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.todo-text{flex:1;font-size:14px}
+.todo-item.done .todo-text{text-decoration:line-through;color:var(--muted)}
+.todo-due{font-size:10px;font-family:var(--mono);color:var(--muted);flex-shrink:0}
+.todo-pri{font-size:9px;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-weight:700;flex-shrink:0}
+.pri-high{background:var(--red-dim);color:var(--red)}
+.pri-med{background:var(--yellow-dim);color:var(--yellow)}
+.pri-low{background:var(--green-dim);color:var(--green)}
+.todo-filter-strip{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+
+/*── Toast ──*/
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 22px;border-radius:40px;font-size:13px;font-weight:600;z-index:9999;display:none;animation:fadeUp .3s ease}
+.toast.show{display:block}
+
+/*── Empty ──*/
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:42px;margin-bottom:10px;opacity:.35}
+
+/*── Detail header ──*/
+.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.detail-title{font-size:21px;font-weight:800;flex:1}
+
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes glowGreen{0%,100%{box-shadow:none}50%{box-shadow:0 0 18px #22c55e88}}
+@keyframes glowRed{0%,100%{box-shadow:none}50%{box-shadow:0 0 18px #ef444488}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+@media(max-width:700px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.mob-open{transform:translateX(0)}
+  .main{margin-left:0!important}
+  .results-stats{grid-template-columns:repeat(2,1fr)}
+  .review-options{grid-template-columns:1fr}
+  .cal-grid{gap:3px}
+  .cal-day{min-height:56px}
+  #cal-layout{grid-template-columns:1fr!important}
+}
+</style>
+</head>
+<body>
+
+<!--── SIDEBAR ──-->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">MCQ<span>Deck</span></div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Study</div>
+    <div class="nav-item active" onclick="navTo('decks')" id="nav-decks"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Decks</div>
+    <div class="nav-item" onclick="navTo('progress')" id="nav-progress"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg></span> Progress</div>
+    <div class="nav-item" onclick="navTo('mindmaps')" id="nav-mindmaps"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5L6.8 17M12 11.5l5.2 5.5"/></svg></span> Mind Maps</div>
+    <div class="nav-item" onclick="navTo('vault')" id="nav-vault"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg></span> Vault</div>
+    <div class="nav-section">Productivity</div>
+    <div class="nav-item" onclick="navTo('calendar')" id="nav-calendar"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span> Calendar</div>
+    <div class="nav-item" onclick="navTo('todo')" id="nav-todo"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> To-Do</div>
+    <div class="nav-item" onclick="navTo('doubt')" id="nav-doubt"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-2.5 3"/><path d="M12 17h.01"/></svg></span> Doubt Solver</div>
+  </div>
+  <div class="sidebar-footer">MCQDeck v3.0 · All data saved locally</div>
+</nav>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!--── MAIN ──-->
+<div class="main" id="main-area">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()"><svg class="icon" style="width:19px;height:19px" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <div class="topbar-title" id="topbar-title">Decks</div>
+    <div id="topbar-actions"></div>
+  </div>
+
+  <!-- PAGE: Decks -->
+  <div class="page active" id="page-decks">
+    <div class="search-wrap">
+      <span class="search-icon-abs"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+      <input class="search-input" id="search-input" placeholder="Search decks…" oninput="renderDecks()"/>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="openModal('modal-new-deck')">+ New Deck</button>
+      <button class="btn btn-yellow" id="btn-multi-quiz" onclick="openModal('modal-multi-quiz')" disabled>⊞ Multi-Quiz</button>
+      <button class="btn btn-ghost" onclick="importDeckJSON()">↑ JSON</button>
+      <button class="btn btn-ghost" onclick="openCSVModal()">↑ CSV / Text</button>
+    </div>
+    <div class="deck-grid" id="deck-grid"></div>
+    <div class="empty" id="home-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div style="font-size:14px">No decks yet — create your first!</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Deck Detail -->
+  <div class="page" id="page-deck-detail">
+    <div class="detail-header">
+      <button class="btn btn-ghost btn-sm" onclick="navTo('decks')">← Back</button>
+      <div class="detail-title" id="deck-detail-name"></div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditDeckModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Rename</button>
+      <button class="btn btn-primary btn-sm" id="btn-quiz-deck" onclick="startQuiz(false)">▶ Quiz</button>
+      <button class="btn btn-ghost btn-sm" id="btn-shuffle-deck" onclick="startQuiz(true)">⇄ Shuffle</button>
+    </div>
+    <div style="margin-bottom:16px"><span class="badge badge-green" id="deck-card-count-badge"></span></div>
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openAddCardModal()">+ Add Card</button>
+      <button class="btn btn-ghost btn-sm" onclick="openCSVModal()">↑ Bulk Import</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportDeck(activeDeckId)">↓ Export JSON</button>
+    </div>
+    <div class="card-list" id="card-list"></div>
+    <div class="empty" id="deck-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg></div><div style="font-size:14px">No cards yet.</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Quiz -->
+  <div class="page" id="page-quiz">
+    <div class="quiz-wrap">
+      <div class="quiz-topbar">
+        <button class="btn btn-ghost btn-sm" onclick="exitQuiz()">← Exit</button>
+        <div style="flex:1"></div>
+        <div class="quiz-timer-box">
+          <div class="quiz-timer" id="quiz-timer">0:00</div>
+          <div class="quiz-q-time" id="quiz-q-time">Q: 0s</div>
+        </div>
+      </div>
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress" style="width:0%"></div></div>
+      <div class="quiz-counter" id="quiz-counter"></div>
+      <div class="quiz-question" id="quiz-question"></div>
+      <img id="quiz-img" class="quiz-img" src="" alt="" style="display:none"/>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-exp-box" id="quiz-explanation" style="display:none">
+        <div class="quiz-exp-label">EXPLANATION</div>
+        <div id="quiz-explanation-text"></div>
+      </div>
+      <div class="quiz-nav">
+        <button class="btn btn-ghost" id="btn-prev" onclick="quizPrev()">← Prev</button>
+        <button class="btn btn-primary" id="btn-next" onclick="quizNext()" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: Results -->
+  <div class="page" id="page-results">
+    <div class="results-wrap">
+      <div class="results-title"><svg class="icon" viewBox="0 0 24 24" style="stroke:var(--yellow);width:20px;height:20px"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5L6 22l6-3 6 3-2.5-8.5"/></svg> Quiz Complete!</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:4px" id="results-deck-name"></div>
+      <div class="score-ring">
+        <svg viewBox="0 0 120 120" width="140" height="140">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="10"/>
+          <circle id="score-arc" cx="60" cy="60" r="54" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 339.3"/>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-pct" id="score-pct">0%</div>
+          <div class="score-lbl">score</div>
+        </div>
+      </div>
+      <div class="results-stats">
+        <div class="stat-box"><div class="stat-val" id="res-total">0</div><div class="stat-key">Total</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--green)" id="res-correct">0</div><div class="stat-key">Correct</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--red)" id="res-wrong">0</div><div class="stat-key">Wrong</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--yellow)" id="res-time">0s</div><div class="stat-key">Total Time</div></div>
+      </div>
+      <!-- Per-question time breakdown -->
+      <div class="time-bars" id="time-bars"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+        <button class="btn btn-primary" onclick="startQuiz(false)">▶ Retry</button>
+        <button class="btn btn-ghost" onclick="showReview()"><svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Review</button>
+        <button class="btn btn-ghost" onclick="navTo('deck-detail')">← Deck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: Review -->
+  <div class="page" id="page-review">
+    <div class="detail-header">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('results')">← Results</button>
+      <div class="detail-title">Review All</div>
+    </div>
+    <div id="review-list"></div>
+  </div>
+
+  <!-- PAGE: Progress -->
+  <div class="page" id="page-progress">
+    <div class="section-title"><svg class="icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg> Overall Stats</div>
+    <div id="progress-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px"></div>
+
+    <div class="section-title">Time Spent This Week</div>
+    <div class="week-chart-wrap" id="week-chart-wrap">
+      <svg id="week-chart" class="week-chart"></svg>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;margin-top:24px">
+      <div class="section-title" style="margin:0">Recent Sessions</div>
+      <button class="btn btn-danger btn-sm" onclick="clearHistory()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clear History</button>
+    </div>
+    <div id="progress-list"></div>
+    <div class="empty" id="progress-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg></div><div style="font-size:14px">Complete a quiz to see progress here.</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Calendar -->
+  <div class="page" id="page-calendar" style="max-width:1180px">
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start" id="cal-layout">
+      <div>
+        <div class="cal-header">
+          <button class="btn btn-ghost btn-sm" onclick="calNav(-1)"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Prev</button>
+          <div class="cal-month" id="cal-month-label"></div>
+          <button class="btn btn-ghost btn-sm" onclick="calNav(1)">Next <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted)">Click a day to see its events below · double‑click a day to open the hour-by-hour view</div>
+      </div>
+      <div>
+        <div class="section-title" id="cal-events-title">All Upcoming Events</div>
+        <button class="btn btn-primary btn-sm" style="margin-bottom:12px;width:100%" onclick="openAddEventModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add Event</button>
+        <div class="events-list" id="events-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: To-Do -->
+  <div class="page" id="page-todo">
+    <div class="todo-input-row">
+      <input class="input" id="todo-new-text" placeholder="Add a task…" style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter')addTodo()"/>
+      <input type="date" class="input" id="todo-new-date" style="width:140px"/>
+      <select class="input sel" id="todo-new-pri" style="width:110px">
+        <option value="high">High Priority</option>
+        <option value="med" selected>Medium Priority</option>
+        <option value="low">Low Priority</option>
+      </select>
+      <button class="btn btn-primary" onclick="addTodo()">Add</button>
+    </div>
+    <div class="todo-filter-strip">
+      <button class="btn btn-ghost btn-sm" onclick="setTodoFilter('all')" id="tf-all">All</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTodoFilter('active')" id="tf-active">Active</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTodoFilter('done')" id="tf-done">Done</button>
+      <button class="btn btn-ghost btn-sm" onclick="setTodoFilter('high')" id="tf-high"><span class="dot" style="background:var(--red)"></span> High</button>
+      <button class="btn btn-danger btn-sm" onclick="clearDoneTodos()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clear Done</button>
+    </div>
+    <div class="todo-list" id="todo-list"></div>
+    <div class="empty" id="todo-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div style="font-size:14px">No tasks yet!</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Doubt Solver -->
+  <div class="page" id="page-doubt" style="max-width:760px">
+    <div class="doubt-box">
+      <label class="label">What's your doubt?</label>
+      <textarea class="textarea" id="doubt-text" placeholder="Type your question here… e.g. 'Why does ice float on water?' or 'Integral of x^2 sin(x)'" style="min-height:90px" onkeydown="if(event.key==='Enter'&&event.ctrlKey)searchDoubt('google')"></textarea>
+      <div class="doubt-engine-row">
+        <button class="btn btn-primary" onclick="searchDoubt('google')"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> Google</button>
+        <button class="btn btn-ghost" onclick="searchDoubt('scholar')"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3L2 9l10 6 8-4.8V17"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/></svg> Google Scholar</button>
+        <button class="btn btn-ghost" onclick="searchDoubt('youtube')"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg> YouTube</button>
+        <button class="btn btn-ghost" onclick="searchDoubt('wolfram')"><svg class="icon" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20M2 12h20M12 2v20"/></svg> Wolfram Alpha</button>
+        <button class="btn btn-ghost" onclick="searchDoubt('duck')"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg> DuckDuckGo</button>
+      </div>
+      <div class="doubt-note">Opens results in a new tab — search engines don't allow their results to be shown inside other pages, so this gets you there in one click instead of typing it out yourself. Your question is saved below so you can come back to it.</div>
+    </div>
+    <div class="section-title" style="margin-top:24px">Saved Doubts</div>
+    <div id="doubt-history"></div>
+    <div class="empty" id="doubt-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-2.5 3"/><path d="M12 17h.01"/></svg></div><div style="font-size:14px">No doubts saved yet — ask one above!</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Mind Maps list -->
+  <div class="page" id="page-mindmaps">
+    <button class="btn btn-primary" style="margin-bottom:16px" onclick="openNewMindMapModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New Mind Map</button>
+    <div class="deck-grid" id="mindmap-grid"></div>
+    <div class="empty" id="mindmap-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5L6.8 17M12 11.5l5.2 5.5"/></svg></div><div style="font-size:14px">No mind maps yet — create one to start organizing ideas!</div>
+    </div>
+  </div>
+
+  <!-- PAGE: Mind Map editor -->
+  <div class="page" id="page-mindmap-editor" style="max-width:none">
+    <div class="mm-toolbar">
+      <button class="btn btn-ghost btn-sm" onclick="navTo('mindmaps')"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Back</button>
+      <input class="input" id="mm-title-input" style="max-width:240px;font-weight:700" onchange="renameMindMap()"/>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary btn-sm" onclick="mmAddNode()"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add Node</button>
+      <button class="btn btn-ghost btn-sm" id="mm-connect-btn" onclick="mmToggleConnectMode()"><svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.5 8.5l7 7"/></svg> Connect</button>
+      <div class="color-swatch-row" id="mm-color-row" style="flex-wrap:nowrap">
+        <span class="mm-color-dot" style="background:#2dd4bf" onclick="mmSetNodeColor('#2dd4bf')"></span>
+        <span class="mm-color-dot" style="background:#4f7dff" onclick="mmSetNodeColor('#4f7dff')"></span>
+        <span class="mm-color-dot" style="background:#22c55e" onclick="mmSetNodeColor('#22c55e')"></span>
+        <span class="mm-color-dot" style="background:#f59e0b" onclick="mmSetNodeColor('#f59e0b')"></span>
+        <span class="mm-color-dot" style="background:#ef4444" onclick="mmSetNodeColor('#ef4444')"></span>
+        <span class="mm-color-dot" style="background:#a855f7" onclick="mmSetNodeColor('#a855f7')"></span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="mmDeleteSelected()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+    </div>
+    <div class="mm-canvas-wrap" id="mm-canvas-wrap">
+      <svg id="mm-canvas" class="mm-canvas"></svg>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Drag the canvas background to pan · drag a node to move it · double-click a node to rename it · click a node then "Connect" then another node to link them · everything autosaves.</div>
+  </div>
+
+  <!-- PAGE: Vault -->
+  <div class="page" id="page-vault">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <label class="btn btn-primary" for="vault-file-input" style="cursor:pointer"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 21h14"/></svg> Upload Files</label>
+      <input type="file" id="vault-file-input" accept=".pdf,image/*" multiple style="display:none" onchange="vaultUpload(this.files)"/>
+      <span style="font-size:11px;color:var(--muted)">PDFs &amp; images, stored locally in your browser (IndexedDB) — never uploaded anywhere.</span>
+    </div>
+    <div class="deck-grid" id="vault-grid"></div>
+    <div class="empty" id="vault-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg></div><div style="font-size:14px">Your vault is empty — upload a PDF or image to get started.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:30px">Notes</div>
+    <button class="btn btn-primary btn-sm" style="margin-bottom:14px" onclick="openNewNoteModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New Note</button>
+    <div class="deck-grid" id="notes-grid"></div>
+    <div class="empty" id="notes-empty" style="display:none">
+      <div class="empty-icon"><svg class="icon-lg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></div><div style="font-size:14px">No notes yet — jot down an idea above.</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- New Mind Map modal -->
+<div class="overlay" id="modal-new-mindmap" onclick="overlayClick(event,'modal-new-mindmap')">
+  <div class="modal">
+    <div class="modal-title"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5L6.8 17M12 11.5l5.2 5.5"/></svg> New Mind Map</div>
+    <div class="field"><label class="label">Title</label><input class="input" id="new-mindmap-title" placeholder="e.g. Photosynthesis, Cell Biology…" onkeydown="if(event.key==='Enter')createMindMap()"/></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-mindmap')">Cancel</button>
+      <button class="btn btn-primary" onclick="createMindMap()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Vault file preview -->
+<div class="overlay" id="modal-vault-preview" onclick="overlayClick(event,'modal-vault-preview')">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-title" id="vault-preview-title">File</div>
+    <div id="vault-preview-body" style="text-align:center"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+      <a class="btn btn-ghost" id="vault-preview-download" download><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Download</a>
+      <button class="btn btn-danger" id="vault-preview-delete" onclick="vaultDeleteFromPreview()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-vault-preview')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Confirm modal (replaces window.confirm, which can be blocked in some preview contexts) -->
+<div class="overlay" id="modal-confirm" onclick="overlayClick(event,'modal-confirm')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title" id="confirm-modal-title">Are you sure?</div>
+    <div id="confirm-modal-body" style="font-size:13px;color:var(--muted);margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-modal-yes">Yes, continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mind Map: rename a new-deck-style text prompt -->
+<div class="overlay" id="modal-text-input" onclick="overlayClick(event,'modal-text-input')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title" id="text-input-modal-title">Enter a value</div>
+    <div class="field"><input class="input" id="text-input-modal-field"/></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-text-input')">Cancel</button>
+      <button class="btn btn-primary" id="text-input-modal-ok">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mind Map: edit node text -->
+<div class="overlay" id="modal-mm-node" onclick="overlayClick(event,'modal-mm-node')">
+  <div class="modal">
+    <div class="modal-title"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Node</div>
+    <div class="field"><label class="label">Text</label><textarea class="textarea" id="mm-node-text-input" style="min-height:80px" onkeydown="if(event.key==='Enter'&&event.ctrlKey)mmSaveNodeText()"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mm-node')">Cancel</button>
+      <button class="btn btn-primary" onclick="mmSaveNodeText()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Note editor -->
+<div class="overlay" id="modal-note" onclick="overlayClick(event,'modal-note')">
+  <div class="modal">
+    <div class="modal-title" id="note-modal-title"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg> New Note</div>
+    <input type="hidden" id="note-id"/>
+    <div class="field"><label class="label">Title</label><input class="input" id="note-title-input" placeholder="Note title…"/></div>
+    <div class="field">
+      <label class="label">Content</label>
+      <div class="rich-toolbar">
+        <button class="rb" title="Bold" onclick="fmt('bold')"><b>B</b></button>
+        <button class="rb" title="Italic" onclick="fmt('italic')"><i>I</i></button>
+        <button class="rb" title="Underline" onclick="fmt('underline')"><u>U</u></button>
+      </div>
+      <div class="rich-editor" id="note-content-input" contenteditable="true" data-ph="Write your note, idea, or reminder…" style="min-height:150px"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-danger" id="note-delete-btn" style="display:none" onclick="deleteNoteFromModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-note')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNoteModal()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!--── MODALS ──-->
+
+<!-- New Deck -->
+<div class="overlay" id="modal-new-deck" onclick="overlayClick(event,'modal-new-deck')">
+  <div class="modal">
+    <div class="modal-title"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> New Deck</div>
+    <div class="field"><label class="label">Deck Name</label>
+      <input class="input" id="new-deck-name" placeholder="e.g. Organic Chemistry, Calculus…" onkeydown="if(event.key==='Enter')saveDeckModal()"/>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-deck')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeckModal()">Create Deck</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Deck -->
+<div class="overlay" id="modal-edit-deck" onclick="overlayClick(event,'modal-edit-deck')">
+  <div class="modal">
+    <div class="modal-title">Edit Deck</div>
+    <div class="field"><label class="label">Deck Name</label>
+      <input class="input" id="edit-deck-name" onkeydown="if(event.key==='Enter')updateDeckModal()"/>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-danger" onclick="deleteDeckModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-deck')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateDeckModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Card -->
+<div class="overlay" id="modal-add-card" onclick="overlayClick(event,'modal-add-card')">
+  <div class="modal">
+    <div class="modal-title"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg> Add Card</div>
+    <div class="field">
+      <label class="label">Question</label>
+      <div class="editor-wrap">
+        <div class="rich-toolbar" id="rtb-add-q"></div>
+        <div class="rich-editor" id="add-card-q" contenteditable="true" data-ph="Enter question… supports bold, italic, $math$"></div>
+      </div>
+      <div class="sym-panel-wrap" id="sym-add-q"></div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-add-card-q"></div>
+    </div>
+    <div class="field">
+      <label class="label">Options — select radio = correct answer</label>
+      <div class="options-grid" id="add-card-opts"></div>
+      <div class="sym-panel-wrap" id="sym-add-opts"></div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-add-card-opts"></div>
+    </div>
+    <div class="field">
+      <label class="label">Explanation (optional)</label>
+      <div class="editor-wrap">
+        <div class="rich-toolbar" id="rtb-add-exp"></div>
+        <div class="rich-editor" id="add-card-exp" contenteditable="true" data-ph="Explain the correct answer…" style="min-height:60px"></div>
+      </div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-add-card-exp"></div>
+    </div>
+    <div class="field">
+      <label class="label">Diagram / Image (optional)</label>
+      <div class="img-drop" onclick="document.getElementById('add-img-inp').click()">
+        <input type="file" id="add-img-inp" accept="image/*" style="display:none" onchange="previewImg('add-img-inp','add-img-prev','add-img-rm')"/>
+        <span style="color:var(--muted);font-size:13px"><svg class="icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h6l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Click to attach an image (JPG, PNG, GIF…)</span>
+        <img id="add-img-prev" class="img-preview"/>
+      </div>
+      <span id="add-img-rm" class="img-remove" onclick="removeImg('add-img-inp','add-img-prev','add-img-rm')">✕ Remove image</span>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-card')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCardModal()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Card -->
+<div class="overlay" id="modal-edit-card" onclick="overlayClick(event,'modal-edit-card')">
+  <div class="modal">
+    <div class="modal-title"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Card</div>
+    <div class="field">
+      <label class="label">Question</label>
+      <div class="editor-wrap">
+        <div class="rich-toolbar" id="rtb-edit-q"></div>
+        <div class="rich-editor" id="edit-card-q" contenteditable="true" data-ph="Enter question…"></div>
+      </div>
+      <div class="sym-panel-wrap" id="sym-edit-q"></div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-edit-card-q"></div>
+    </div>
+    <div class="field">
+      <label class="label">Options</label>
+      <div class="options-grid" id="edit-card-opts"></div>
+      <div class="sym-panel-wrap" id="sym-edit-opts"></div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-edit-card-opts"></div>
+    </div>
+    <div class="field">
+      <label class="label">Explanation (optional)</label>
+      <div class="editor-wrap">
+        <div class="rich-toolbar" id="rtb-edit-exp"></div>
+        <div class="rich-editor" id="edit-card-exp" contenteditable="true" data-ph="Explain…" style="min-height:60px"></div>
+      </div>
+      <div class="math-preview-label">Preview</div>
+      <div class="math-preview" id="preview-edit-card-exp"></div>
+    </div>
+    <div class="field">
+      <label class="label">Diagram / Image (optional)</label>
+      <div class="img-drop" onclick="document.getElementById('edit-img-inp').click()">
+        <input type="file" id="edit-img-inp" accept="image/*" style="display:none" onchange="previewImg('edit-img-inp','edit-img-prev','edit-img-rm')"/>
+        <span style="color:var(--muted);font-size:13px"><svg class="icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h6l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Click to attach an image</span>
+        <img id="edit-img-prev" class="img-preview"/>
+      </div>
+      <span id="edit-img-rm" class="img-remove" onclick="removeImg('edit-img-inp','edit-img-prev','edit-img-rm')">✕ Remove image</span>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-card')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateCardModal()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- Multi-Quiz -->
+<div class="overlay" id="modal-multi-quiz" onclick="overlayClick(event,'modal-multi-quiz')">
+  <div class="modal">
+    <div class="modal-title">⊞ Multi-Deck Quiz</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Select 2+ decks to combine into one quiz.</p>
+    <div id="multi-deck-list" style="max-height:280px;overflow-y:auto;margin-bottom:12px"></div>
+    <label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:16px">
+      <input type="checkbox" id="multi-shuffle" style="accent-color:var(--blue);width:16px;height:16px"/> Shuffle questions
+    </label>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-multi-quiz')">Cancel</button>
+      <button class="btn btn-primary" onclick="startMultiQuiz()">Start Quiz →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV/Text Import -->
+<div class="overlay" id="modal-csv" onclick="overlayClick(event,'modal-csv')">
+  <div class="modal">
+    <div class="modal-title">↑ Bulk Import Questions</div>
+    <div class="tab-strip">
+      <button class="tab-btn active" id="tab-csv" onclick="switchImportTab('csv')">CSV Format</button>
+      <button class="tab-btn" id="tab-text" onclick="switchImportTab('text')">Plain Text</button>
+    </div>
+    <div id="import-tab-csv">
+      <div class="hint-box">
+        <b>Format:</b> Question, OptionA, OptionB, OptionC, OptionD, CorrectIndex(0-3), Explanation<br>
+        <b>Example:</b> What is H₂O?, Hydrogen, Water, Salt, Oxygen, 1, Water is H₂O
+      </div>
+      <div class="field"><label class="label">Paste CSV rows</label>
+        <textarea class="textarea" id="csv-input" style="font-family:var(--mono);font-size:12px;min-height:150px" placeholder="Question,A,B,C,D,CorrectIndex,Explanation&#10;Speed of light?,3e8 m/s,3e6 m/s,3e4 m/s,3e2 m/s,0,c ≈ 3×10⁸ m/s"></textarea>
+      </div>
+    </div>
+    <div id="import-tab-text" style="display:none">
+      <div class="hint-box">
+        One block per question, separated by blank line:<br><br>
+        Q: What is NaCl?<br>A: Sugar&nbsp;&nbsp;B: Salt&nbsp;&nbsp;C: Water&nbsp;&nbsp;D: Acid<br>ANS: B<br>EXP: NaCl is table salt (optional)
+      </div>
+      <div class="field"><label class="label">Paste Questions</label>
+        <textarea class="textarea" id="text-input" style="font-family:var(--mono);font-size:12px;min-height:150px" placeholder="Q: What is NaCl?&#10;A: Sugar&#10;B: Salt&#10;C: Water&#10;D: Acid&#10;ANS: B&#10;EXP: NaCl is table salt"></textarea>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Import into deck</label>
+      <select class="input sel" id="csv-deck-select"></select>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="createDeckForImport()">+ Create new deck</button>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-csv')">Cancel</button>
+      <button class="btn btn-primary" onclick="runBulkImport()">Import Cards</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Calendar Event -->
+<div class="overlay" id="modal-add-event" onclick="overlayClick(event,'modal-add-event')">
+  <div class="modal">
+    <div class="modal-title" id="event-modal-title"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Add Event</div>
+    <input type="hidden" id="event-id"/>
+    <div class="field"><label class="label">Title</label><input class="input" id="event-title" placeholder="e.g. Study session, Exam…"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="field"><label class="label">Date</label><input type="date" class="input" id="event-date"/></div>
+      <div class="field"><label class="label">Time (optional)</label><input type="time" class="input" id="event-time"/></div>
+      <div class="field"><label class="label">Duration (min)</label><input type="number" class="input" id="event-duration" value="30" min="5" step="5"/></div>
+    </div>
+    <div class="field"><label class="label">Color</label>
+      <div class="color-swatch-row">
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#4f7dff" checked/><span class="dot" style="background:#4f7dff"></span>Blue</label>
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#2dd4bf"/><span class="dot" style="background:#2dd4bf"></span>Turquoise</label>
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#22c55e"/><span class="dot" style="background:#22c55e"></span>Green</label>
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#f59e0b"/><span class="dot" style="background:#f59e0b"></span>Yellow</label>
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#ef4444"/><span class="dot" style="background:#ef4444"></span>Red</label>
+        <label class="color-swatch-lbl"><input type="radio" name="event-color" value="#a855f7"/><span class="dot" style="background:#a855f7"></span>Purple</label>
+      </div>
+    </div>
+    <div class="field"><label class="label">Note (optional)</label><textarea class="textarea" id="event-note" style="min-height:60px" placeholder="Any details…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end" id="event-modal-actions">
+      <button class="btn btn-danger" id="event-delete-btn" style="display:none" onclick="deleteEventFromModal()"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-event')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Day View (24-hour timeline) -->
+<div class="overlay" id="modal-day-view" onclick="overlayClick(event,'modal-day-view')">
+  <div class="modal dayview-modal">
+    <div class="dayview-head">
+      <button class="btn btn-ghost btn-sm" onclick="dayNav(-1)"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="dayview-date" id="dayview-date-label"></div>
+      <button class="btn btn-ghost btn-sm" onclick="dayNav(1)"><svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+      <button class="btn btn-primary btn-sm" onclick="openAddEventModal(dayViewDate)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-day-view')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="dayview-body" id="dayview-body">
+      <div class="dayview-timeline" id="dayview-timeline"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px">Click any empty slot on the timeline to add an event at that time. Click an existing event to edit or delete it.</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+const uid=()=>Math.random().toString(36).slice(2,10);
+function markIcon(correct){
+  return correct
+    ? '<svg class="icon" viewBox="0 0 24 24" style="stroke:var(--green)"><path d="M20 6L9 17l-5-5"/></svg>'
+    : '<svg class="icon" viewBox="0 0 24 24" style="stroke:var(--red)"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+}
+const LETTERS=['A','B','C','D'];
+let decks=[],quizHistory=[],todos=[],calEvents=[];
+let activeDeckId=null,editingCardId=null;
+let quizCards=[],quizIndex=0,quizAnswers={},quizMultiMode=false;
+let quizTimerInterval=null,quizTotalSec=0,quizQSec=0,quizQTimes=[];
+let addImgData=null,editImgData=null;
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let todoFilter='all';
+let doubts=[];
+let mindMaps=[];
+let notes=[];
+let currentSymTarget=null; // which editor is active for symbol insertion
+
+function loadAll(){
+  try{decks=JSON.parse(localStorage.getItem('mcq-decks-v3'))||[];}catch{decks=[];}
+  try{quizHistory=JSON.parse(localStorage.getItem('mcq-history-v3'))||[];}catch{quizHistory=[];}
+  try{todos=JSON.parse(localStorage.getItem('mcq-todos'))||[];}catch{todos=[];}
+  try{calEvents=JSON.parse(localStorage.getItem('mcq-events'))||[];}catch{calEvents=[];}
+  try{doubts=JSON.parse(localStorage.getItem('mcq-doubts'))||[];}catch{doubts=[];}
+  try{mindMaps=JSON.parse(localStorage.getItem('mcq-mindmaps'))||[];}catch{mindMaps=[];}
+  try{notes=JSON.parse(localStorage.getItem('mcq-notes'))||[];}catch{notes=[];}
+}
+function save(){localStorage.setItem('mcq-decks-v3',JSON.stringify(decks));}
+function saveHistory(){localStorage.setItem('mcq-history-v3',JSON.stringify(quizHistory));}
+function saveTodos(){localStorage.setItem('mcq-todos',JSON.stringify(todos));}
+function saveEvents(){localStorage.setItem('mcq-events',JSON.stringify(calEvents));}
+function saveDoubts(){localStorage.setItem('mcq-doubts',JSON.stringify(doubts));}
+function saveMindMaps(){localStorage.setItem('mcq-mindmaps',JSON.stringify(mindMaps));}
+function saveNotes(){localStorage.setItem('mcq-notes',JSON.stringify(notes));}
+function getDeck(id){return decks.find(d=>d.id===(id||activeDeckId));}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+const PAGE_TITLES={decks:'Decks','deck-detail':'Deck',quiz:'Quiz',results:'Results',review:'Review',progress:'Progress',calendar:'Calendar',todo:'To-Do',doubt:'Doubt Solver',mindmaps:'Mind Maps','mindmap-editor':'Mind Map',vault:'Vault'};
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+name);if(el)el.classList.add('active');
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[name]||name;
+}
+function navTo(name){
+  const top=['decks','progress','calendar','todo','doubt','mindmaps','vault'];
+  if(top.includes(name)){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const el=document.getElementById('nav-'+name);if(el)el.classList.add('active');
+  }
+  showPage(name);
+  if(name==='decks')renderDecks();
+  if(name==='deck-detail')renderDeck();
+  if(name==='progress')renderProgress();
+  if(name==='calendar')renderCalendar();
+  if(name==='todo')renderTodos();
+  if(name==='doubt')renderDoubtHistory();
+  if(name==='mindmaps')renderMindMapList();
+  if(name==='vault'){renderVault();renderNotes();}
+  if(window.innerWidth<=700)closeSidebar();
+}
+
+// ════════════════════════════════════════════
+//  SIDEBAR
+// ════════════════════════════════════════════
+let sidebarOpen=true;
+function toggleSidebar(){
+  if(window.innerWidth<=700){
+    document.getElementById('sidebar').classList.toggle('mob-open');
+    document.getElementById('sidebar-overlay').classList.toggle('show');
+  } else {
+    sidebarOpen=!sidebarOpen;
+    document.getElementById('sidebar').classList.toggle('collapsed',!sidebarOpen);
+    document.getElementById('main-area').classList.toggle('expanded',!sidebarOpen);
+  }
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('mob-open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  const inp=document.getElementById(id).querySelector('input:not([type=file]):not([type=checkbox]):not([type=radio]),[contenteditable]');
+  if(inp)setTimeout(()=>inp.focus(),60);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function overlayClick(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// Generic confirm modal — used instead of window.confirm(), which some
+// embedded/preview browser contexts silently block.
+function showConfirm(message,onYes,okLabel){
+  document.getElementById('confirm-modal-body').textContent=message;
+  const oldBtn=document.getElementById('confirm-modal-yes');
+  const newBtn=oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(newBtn,oldBtn);
+  newBtn.id='confirm-modal-yes';
+  newBtn.textContent=okLabel||'Yes, continue';
+  newBtn.addEventListener('click',()=>{closeModal('modal-confirm');onYes();});
+  openModal('modal-confirm');
+}
+// Generic single-line text input modal — used instead of window.prompt().
+function showTextInput(title,defaultValue,onSave){
+  document.getElementById('text-input-modal-title').textContent=title;
+  const field=document.getElementById('text-input-modal-field');
+  field.value=defaultValue||'';
+  const oldBtn=document.getElementById('text-input-modal-ok');
+  const newBtn=oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(newBtn,oldBtn);
+  newBtn.id='text-input-modal-ok';
+  const submit=()=>{const v=field.value.trim();closeModal('modal-text-input');if(v)onSave(v);};
+  newBtn.addEventListener('click',submit);
+  field.onkeydown=(e)=>{if(e.key==='Enter')submit();};
+  openModal('modal-text-input');
+  setTimeout(()=>field.focus(),60);
+}
+
+// ════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════
+function showToast(msg,err){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'var(--red)':'var(--green)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ════════════════════════════════════════════
+//  RICH TEXT TOOLBAR
+// ════════════════════════════════════════════
+function buildRichToolbar(editorId,containerId){
+  const c=document.getElementById(containerId);
+  c.innerHTML=`
+    <button class="rb" title="Bold (Ctrl+B)" onclick="fmt('bold')"><b>B</b></button>
+    <button class="rb" title="Italic (Ctrl+I)" onclick="fmt('italic')"><i>I</i></button>
+    <button class="rb" title="Underline (Ctrl+U)" onclick="fmt('underline')"><u>U</u></button>
+    <button class="rb" title="Strikethrough" onclick="fmt('strikeThrough')"><s>S</s></button>
+    <span class="rb-sep"></span>
+    <button class="rb" title="Superscript (exponent)" onclick="fmt('superscript')">x²</button>
+    <button class="rb" title="Subscript" onclick="fmt('subscript')">x₂</button>
+    <span class="rb-sep"></span>
+    <button class="rb" title="Highlight" onclick="fmt('backColor','#f59e0b55')"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="M9 11l6-6 4 4-6 6H7v-4z"/><path d="M3 21l3-3"/></svg> Highlight</button>
+    <button class="rb" title="Text color: blue" onclick="fmt('foreColor','#4f7dff')"><span style="color:#4f7dff">A</span></button>
+    <button class="rb" title="Text color: green" onclick="fmt('foreColor','#22c55e')"><span style="color:#22c55e">A</span></button>
+    <button class="rb" title="Text color: red" onclick="fmt('foreColor','#ef4444')"><span style="color:#ef4444">A</span></button>
+    <span class="rb-sep"></span>
+    <button class="rb" title="Clear all formatting" onclick="fmt('removeFormat')">✕ Clear</button>
+  `;
+}
+function fmt(cmd,val){document.execCommand(cmd,false,val||null);}
+
+// ════════════════════════════════════════════
+//  SYMBOL PANEL  (tabbed: Math | Greek | Chemistry | Equations)
+// ════════════════════════════════════════════
+const SYM_TABS=[
+  {id:'math',label:'Math',syms:[
+    {d:'x²',  v:'$x^{2}$'},     {d:'xⁿ',  v:'$x^{n}$'},
+    {d:'x₁',  v:'$x_{1}$'},     {d:'√x',  v:'$\\sqrt{x}$'},
+    {d:'∛x',  v:'$\\sqrt[3]{x}$'},{d:'a/b', v:'$\\frac{a}{b}$'},
+    {d:'∫',   v:'$\\int_{a}^{b} f(x)\\,dx$'},
+    {d:'∬',   v:'$\\iint$'},
+    {d:'∑',   v:'$\\sum_{i=1}^{n} i$'},
+    {d:'∏',   v:'$\\prod_{i=1}^{n} i$'},
+    {d:'lim', v:'$\\lim_{x \\to \\infty}$'},
+    {d:'∂',   v:'$\\frac{\\partial f}{\\partial x}$'},
+    {d:'∇',   v:'$\\nabla$'},
+    {d:'±',   v:'±'}, {d:'≈',v:'≈'}, {d:'≠',v:'≠'},
+    {d:'≤',   v:'≤'}, {d:'≥',v:'≥'}, {d:'×',v:'×'},
+    {d:'÷',   v:'÷'}, {d:'·',v:'·'}, {d:'∞',v:'$\\infty$'},
+    {d:'|x|', v:'$|x|$'},        {d:'‖v‖',v:'$\\|v\\|$'},
+    {d:'⌊x⌋', v:'$\\lfloor x \\rfloor$'},
+    {d:'⌈x⌉', v:'$\\lceil x \\rceil$'},
+  ]},
+  {id:'greek',label:'Greek',syms:[
+    {d:'α',v:'$\\alpha$'},{d:'β',v:'$\\beta$'},{d:'γ',v:'$\\gamma$'},
+    {d:'Γ',v:'$\\Gamma$'},{d:'δ',v:'$\\delta$'},{d:'Δ',v:'$\\Delta$'},
+    {d:'ε',v:'$\\varepsilon$'},{d:'ζ',v:'$\\zeta$'},{d:'η',v:'$\\eta$'},
+    {d:'θ',v:'$\\theta$'},{d:'Θ',v:'$\\Theta$'},{d:'ι',v:'$\\iota$'},
+    {d:'κ',v:'$\\kappa$'},{d:'λ',v:'$\\lambda$'},{d:'Λ',v:'$\\Lambda$'},
+    {d:'μ',v:'$\\mu$'},{d:'ν',v:'$\\nu$'},{d:'ξ',v:'$\\xi$'},
+    {d:'π',v:'$\\pi$'},{d:'Π',v:'$\\Pi$'},{d:'ρ',v:'$\\rho$'},
+    {d:'σ',v:'$\\sigma$'},{d:'Σ',v:'$\\Sigma$'},{d:'τ',v:'$\\tau$'},
+    {d:'υ',v:'$\\upsilon$'},{d:'φ',v:'$\\phi$'},{d:'Φ',v:'$\\Phi$'},
+    {d:'χ',v:'$\\chi$'},{d:'ψ',v:'$\\psi$'},{d:'Ψ',v:'$\\Psi$'},
+    {d:'ω',v:'$\\omega$'},{d:'Ω',v:'$\\Omega$'},
+  ]},
+  {id:'chem',label:'Chemistry',syms:[
+    {d:'→',v:'→'},{d:'⇌',v:'⇌'},{d:'↑',v:'↑'},{d:'↓',v:'↓'},
+    {d:'⁺',v:'⁺'},{d:'⁻',v:'⁻'},{d:'°C',v:'°C'},{d:'°K',v:'K'},
+    {d:'½',v:'½'},{d:'¼',v:'¼'},{d:'¾',v:'¾'},
+    {d:'ΔH',v:'$\\Delta H$'},{d:'ΔG',v:'$\\Delta G$'},{d:'ΔS',v:'$\\Delta S$'},
+    {d:'mol',v:' mol '},{d:'M',v:' M '},{d:'L',v:' L '},{d:'kJ',v:' kJ '},
+    {d:'H₂O',v:'H₂O'},{d:'CO₂',v:'CO₂'},{d:'O₂',v:'O₂'},{d:'H₂',v:'H₂'},
+    {d:'NaCl',v:'NaCl'},{d:'NH₃',v:'NH₃'},{d:'H₂SO₄',v:'H₂SO₄'},
+    {d:'[A]',v:'[A]'},{d:'Kₑq',v:'$K_{eq}$'},{d:'Kₐ',v:'$K_a$'},
+  ]},
+  {id:'eqn',label:'Equations',syms:[
+    {d:'E=mc²',  v:'$E = mc^{2}$'},
+    {d:'F=ma',   v:'$F = ma$'},
+    {d:'PV=nRT', v:'$PV = nRT$'},
+    {d:'v=λf',   v:'$v = \\lambda f$'},
+    {d:'E=hf',   v:'$E = hf$'},
+    {d:'KE=½mv²',v:'$KE = \\frac{1}{2}mv^{2}$'},
+    {d:'Ohm V=IR',v:'$V = IR$'},
+    {d:'P=IV',   v:'$P = IV$'},
+    {d:'Q=mcΔT', v:'$Q = mc\\Delta T$'},
+    {d:'ΔG=ΔH-TΔS',v:'$\\Delta G = \\Delta H - T\\Delta S$'},
+    {d:'pH=-log[H⁺]',v:'$pH = -\\log[H^{+}]$'},
+    {d:'λ=h/mv', v:'$\\lambda = \\frac{h}{mv}$'},
+    {d:'a²+b²=c²',v:'$a^{2}+b^{2}=c^{2}$'},
+    {d:'∫f dx',  v:'$\\int f(x)\\,dx$'},
+    {d:'d/dx eˣ',v:'$\\frac{d}{dx}e^{x}=e^{x}$'},
+  ]},
+];
+
+function buildSymPanel(editorId,containerId){
+  const c=document.getElementById(containerId);
+  const tabsHtml=SYM_TABS.map((t,i)=>`<button class="sym-tab${i===0?' active':''}" onclick="switchSymTab('${containerId}','${t.id}',this)">${t.label}</button>`).join('');
+  const bodiesHtml=SYM_TABS.map((t,i)=>`
+    <div class="sym-body${i===0?' active':''}" id="${containerId}-body-${t.id}">
+      ${t.syms.map(s=>`<button class="sym-btn" title="${s.v}" onclick="insertSym('${editorId}',\`${s.v.replace(/`/g,'\\`')}\`)">${s.d}</button>`).join('')}
+    </div>
+  `).join('');
+  c.innerHTML=`<div class="sym-tabs">${tabsHtml}</div>${bodiesHtml}`;
+}
+
+function switchSymTab(containerId,tabId,btn){
+  document.querySelectorAll(`#${containerId} .sym-tab`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`#${containerId} .sym-body`).forEach(b=>b.classList.remove('active'));
+  document.getElementById(`${containerId}-body-${tabId}`).classList.add('active');
+}
+
+function insertSym(editorId,sym){
+  const el=document.getElementById(editorId);
+  el.focus();
+  // Restore saved selection if any
+  if(window._savedRange){
+    const sel=window.getSelection();
+    sel.removeAllRanges();sel.addRange(window._savedRange);
+  }
+  document.execCommand('insertText',false,sym);
+}
+
+// Save caret when editor loses focus to symbol panel
+document.addEventListener('focusout',e=>{
+  if(e.target.classList.contains('rich-editor')){
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount) window._savedRange=sel.getRangeAt(0).cloneRange();
+  }
+});
+
+// ════════════════════════════════════════════
+//  MATHJAX
+// ════════════════════════════════════════════
+function renderMath(el){if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([el]).catch(()=>{});}
+
+// ── Live math preview for the rich editors ──────────────────────────────────
+// We never run MathJax directly on a contenteditable element (it rewrites the
+// DOM and would destroy the editable LaTeX source / cursor position). Instead
+// each editor gets a small read-only preview box below it that mirrors the
+// content and is typeset on a short debounce as you type.
+const _previewTimers={};
+function attachLivePreview(editorId,previewId){
+  const ed=document.getElementById(editorId);
+  const prev=document.getElementById(previewId);
+  if(!ed||!prev)return;
+  const update=()=>{
+    prev.innerHTML=ed.innerHTML||'';
+    renderMath(prev);
+  };
+  ed.addEventListener('input',()=>{
+    clearTimeout(_previewTimers[previewId]);
+    _previewTimers[previewId]=setTimeout(update,350);
+  });
+  update();
+}
+function attachOptionsPreview(cid,previewId){
+  const prev=document.getElementById(previewId);
+  if(!prev)return;
+  const update=()=>{
+    prev.innerHTML=LETTERS.map((l,i)=>{
+      const el=document.getElementById(cid+'-opt-'+i);
+      return `<div class="opt-preview-row"><b>${l}.</b><span>${el?el.innerHTML:''}</span></div>`;
+    }).join('');
+    renderMath(prev);
+  };
+  LETTERS.forEach((_,i)=>{
+    const el=document.getElementById(cid+'-opt-'+i);
+    if(!el)return;
+    el.addEventListener('input',()=>{
+      clearTimeout(_previewTimers[previewId]);
+      _previewTimers[previewId]=setTimeout(update,350);
+    });
+  });
+  update();
+}
+function getEditorHTML(id){return document.getElementById(id).innerHTML.trim();}
+function setEditorHTML(id,html){document.getElementById(id).innerHTML=html||'';}
+function getEditorText(id){return document.getElementById(id).innerText.trim();}
+
+// ════════════════════════════════════════════
+//  IMAGE
+// ════════════════════════════════════════════
+function previewImg(inp,prev,rm){
+  const file=document.getElementById(inp).files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById(prev);p.src=e.target.result;p.style.display='block';
+    document.getElementById(rm).style.display='block';
+    if(inp.startsWith('add'))addImgData=e.target.result;else editImgData=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removeImg(inp,prev,rm){
+  document.getElementById(inp).value='';
+  const p=document.getElementById(prev);p.src='';p.style.display='none';
+  document.getElementById(rm).style.display='none';
+  if(inp.startsWith('add'))addImgData=null;else editImgData=null;
+}
+function loadEditImg(url){
+  editImgData=url||null;
+  const p=document.getElementById('edit-img-prev');const rm=document.getElementById('edit-img-rm');
+  if(url){p.src=url;p.style.display='block';rm.style.display='block';}
+  else{p.src='';p.style.display='none';rm.style.display='none';}
+}
+
+// ════════════════════════════════════════════
+//  DECKS — HOME
+// ════════════════════════════════════════════
+function renderDecks(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const filtered=decks.filter(d=>d.name.toLowerCase().includes(q));
+  const grid=document.getElementById('deck-grid');
+  const empty=document.getElementById('home-empty');
+  document.getElementById('btn-multi-quiz').disabled=decks.length<2;
+  if(!filtered.length){grid.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  grid.innerHTML=filtered.map(deck=>`
+    <div class="deck-card" onclick="openDeck('${deck.id}')">
+      <div class="deck-title">${esc(deck.name)}</div>
+      <div class="deck-meta">${deck.cards.length} card${deck.cards.length!==1?'s':''} · ${deck.cards.length?'Ready':'Empty'}</div>
+      <div class="deck-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-primary btn-sm" onclick="quickQuiz('${deck.id}')" ${!deck.cards.length?'disabled':''}>▶ Quiz</button>
+        <button class="btn btn-ghost btn-sm" onclick="openDeckEditFromHome('${deck.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-ghost btn-sm" onclick="exportDeck('${deck.id}')">↓</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDeckById('${deck.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+    </div>
+  `).join('');
+}
+function openDeck(id){activeDeckId=id;navTo('deck-detail');}
+function quickQuiz(id){activeDeckId=id;startQuiz(false);}
+
+// ════════════════════════════════════════════
+//  DECK DETAIL
+// ════════════════════════════════════════════
+function renderDeck(){
+  const deck=getDeck();if(!deck)return;
+  document.getElementById('deck-detail-name').textContent=deck.name;
+  document.getElementById('deck-card-count-badge').textContent=deck.cards.length+' card'+(deck.cards.length!==1?'s':'');
+  document.getElementById('btn-quiz-deck').disabled=!deck.cards.length;
+  document.getElementById('btn-shuffle-deck').disabled=!deck.cards.length;
+  const list=document.getElementById('card-list');
+  const empty=document.getElementById('deck-empty');
+  if(!deck.cards.length){list.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  list.innerHTML=deck.cards.map((c,i)=>`
+    <div class="card-item">
+      <div class="card-num">#${i+1}</div>
+      ${c.image?`<img src="${c.image}" class="card-thumb" alt=""/>`: ''}
+      <div style="flex:1">
+        <div class="card-q">${c.question||''}</div>
+        <div class="card-ans">✓ ${c.options[c.correctIndex]||''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="padding:5px 8px" onclick="openEditCard('${c.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      <button class="btn btn-danger btn-sm" style="padding:5px 8px" onclick="deleteCard('${c.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </div>
+  `).join('');
+  renderMath(list);
+}
+
+// ════════════════════════════════════════════
+//  DECK CRUD
+// ════════════════════════════════════════════
+function saveDeckModal(){
+  const name=document.getElementById('new-deck-name').value.trim();if(!name)return;
+  decks.push({id:uid(),name,cards:[],createdAt:Date.now()});
+  save();closeModal('modal-new-deck');document.getElementById('new-deck-name').value='';
+  renderDecks();showToast('Deck created!');
+}
+function openEditDeckModal(){document.getElementById('edit-deck-name').value=getDeck().name;openModal('modal-edit-deck');}
+function openDeckEditFromHome(id){activeDeckId=id;openEditDeckModal();}
+function updateDeckModal(){
+  const name=document.getElementById('edit-deck-name').value.trim();if(!name)return;
+  getDeck().name=name;save();closeModal('modal-edit-deck');renderDecks();renderDeck();showToast('Renamed!');
+}
+function deleteDeckModal(){
+  showConfirm('Delete this deck and all its cards? This cannot be undone.',()=>{
+    deleteDeckById(activeDeckId);closeModal('modal-edit-deck');navTo('decks');
+  });
+}
+function deleteDeckById(id){decks=decks.filter(d=>d.id!==id);save();renderDecks();showToast('Deck deleted.');}
+function exportDeck(id){
+  const deck=getDeck(id);if(!deck)return;
+  const blob=new Blob([JSON.stringify(deck,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=deck.name.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(url);
+}
+function importDeckJSON(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{const d=JSON.parse(ev.target.result);if(!d.name||!Array.isArray(d.cards))throw 0;
+        decks.push({...d,id:uid()});save();renderDecks();showToast('Deck imported!');}
+      catch{showToast('Import failed',true);}
+    };reader.readAsText(file);
+  };inp.click();
+}
+
+// ════════════════════════════════════════════
+//  CARD CRUD
+// ════════════════════════════════════════════
+function buildOptionRows(cid,vals,ci){
+  document.getElementById(cid).innerHTML=LETTERS.map((l,i)=>`
+    <div class="option-row">
+      <input type="radio" class="option-radio" name="${cid}-correct" value="${i}" ${i===ci?'checked':''}/>
+      <span class="option-key-lbl">${l}</span>
+      <div class="rich-editor option-editor" contenteditable="true" data-ph="Option ${l}… supports $math$" id="${cid}-opt-${i}">${vals[i]||''}</div>
+    </div>
+  `).join('');
+}
+
+// Track which option editor was last focused, so the shared symbol panel
+// below the options grid knows where to insert a tapped symbol.
+let lastFocusedOptionEditor=null;
+document.addEventListener('focusin',e=>{
+  if(e.target.classList&&e.target.classList.contains('option-editor')) lastFocusedOptionEditor=e.target.id;
+});
+
+function insertSymToOption(sym){
+  if(!lastFocusedOptionEditor){showToast('Click inside an option first',true);return;}
+  insertSym(lastFocusedOptionEditor,sym);
+}
+
+// Same tabbed symbol panel as the question/explanation editors, but routes
+// every insert through insertSymToOption() since the target option can change.
+function buildOptSymPanel(containerId){
+  const c=document.getElementById(containerId);
+  const tabsHtml=SYM_TABS.map((t,i)=>`<button class="sym-tab${i===0?' active':''}" onclick="switchSymTab('${containerId}','${t.id}',this)">${t.label}</button>`).join('');
+  const bodiesHtml=SYM_TABS.map((t,i)=>`
+    <div class="sym-body${i===0?' active':''}" id="${containerId}-body-${t.id}">
+      ${t.syms.map(s=>`<button class="sym-btn" title="${s.v}" onclick="insertSymToOption(\`${s.v.replace(/`/g,'\\`')}\`)">${s.d}</button>`).join('')}
+    </div>
+  `).join('');
+  c.innerHTML=`<div class="sym-tabs">${tabsHtml}</div>${bodiesHtml}`;
+}
+
+function openAddCardModal(){
+  buildOptionRows('add-card-opts',['','','',''],0);
+  setEditorHTML('add-card-q','');setEditorHTML('add-card-exp','');
+  addImgData=null;
+  document.getElementById('add-img-inp').value='';
+  document.getElementById('add-img-prev').style.display='none';
+  document.getElementById('add-img-rm').style.display='none';
+  buildRichToolbar('add-card-q','rtb-add-q');
+  buildRichToolbar('add-card-exp','rtb-add-exp');
+  buildSymPanel('add-card-q','sym-add-q');
+  buildOptSymPanel('sym-add-opts');
+  lastFocusedOptionEditor=null;
+  attachLivePreview('add-card-q','preview-add-card-q');
+  attachLivePreview('add-card-exp','preview-add-card-exp');
+  attachOptionsPreview('add-card-opts','preview-add-card-opts');
+  openModal('modal-add-card');
+}
+
+function saveCardModal(){
+  const q=getEditorHTML('add-card-q');
+  const opts=LETTERS.map((_,i)=>document.getElementById('add-card-opts-opt-'+i).innerHTML.trim());
+  const optsText=LETTERS.map((_,i)=>document.getElementById('add-card-opts-opt-'+i).innerText.trim());
+  const correctEl=document.querySelector('input[name="add-card-opts-correct"]:checked');
+  const correct=correctEl?parseInt(correctEl.value):0;
+  const exp=getEditorHTML('add-card-exp');
+  if(!getEditorText('add-card-q')||optsText.some(o=>!o)){showToast('Fill in question & all 4 options',true);return;}
+  getDeck().cards.push({id:uid(),question:q,options:opts,correctIndex:correct,explanation:exp,image:addImgData||null});
+  save();closeModal('modal-add-card');renderDeck();showToast('Card added!');
+}
+
+function openEditCard(cardId){
+  editingCardId=cardId;
+  const card=getDeck().cards.find(c=>c.id===cardId);
+  setEditorHTML('edit-card-q',card.question||'');
+  setEditorHTML('edit-card-exp',card.explanation||'');
+  buildOptionRows('edit-card-opts',card.options,card.correctIndex);
+  loadEditImg(card.image||null);
+  buildRichToolbar('edit-card-q','rtb-edit-q');
+  buildRichToolbar('edit-card-exp','rtb-edit-exp');
+  buildSymPanel('edit-card-q','sym-edit-q');
+  buildOptSymPanel('sym-edit-opts');
+  lastFocusedOptionEditor=null;
+  attachLivePreview('edit-card-q','preview-edit-card-q');
+  attachLivePreview('edit-card-exp','preview-edit-card-exp');
+  attachOptionsPreview('edit-card-opts','preview-edit-card-opts');
+  openModal('modal-edit-card');
+}
+
+function updateCardModal(){
+  const q=getEditorHTML('edit-card-q');
+  const opts=LETTERS.map((_,i)=>document.getElementById('edit-card-opts-opt-'+i).innerHTML.trim());
+  const optsText=LETTERS.map((_,i)=>document.getElementById('edit-card-opts-opt-'+i).innerText.trim());
+  const correctEl=document.querySelector('input[name="edit-card-opts-correct"]:checked');
+  const correct=correctEl?parseInt(correctEl.value):0;
+  const exp=getEditorHTML('edit-card-exp');
+  if(!getEditorText('edit-card-q')||optsText.some(o=>!o)){showToast('Fill in question & all 4 options',true);return;}
+  const deck=getDeck();const idx=deck.cards.findIndex(c=>c.id===editingCardId);
+  deck.cards[idx]={...deck.cards[idx],question:q,options:opts,correctIndex:correct,explanation:exp,image:editImgData!==undefined?editImgData:deck.cards[idx].image};
+  save();closeModal('modal-edit-card');renderDeck();showToast('Card updated!');
+}
+
+function deleteCard(cardId){
+  getDeck().cards=getDeck().cards.filter(c=>c.id!==cardId);save();renderDeck();
+}
+
+// ════════════════════════════════════════════
+//  QUIZ — TIMER
+// ════════════════════════════════════════════
+function startTimer(){
+  quizTotalSec=0;quizQSec=0;quizQTimes=[];
+  clearInterval(quizTimerInterval);
+  quizTimerInterval=setInterval(()=>{
+    quizTotalSec++;quizQSec++;
+    document.getElementById('quiz-timer').textContent=fmtTime(quizTotalSec);
+    document.getElementById('quiz-q-time').textContent='This Q: '+quizQSec+'s';
+    document.getElementById('quiz-timer').classList.toggle('urgent',quizQSec>90);
+  },1000);
+}
+function stopTimer(){clearInterval(quizTimerInterval);}
+function lapQ(){quizQTimes.push(quizQSec);quizQSec=0;}
+function fmtTime(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);}
+
+// ════════════════════════════════════════════
+//  QUIZ — PLAY
+// ════════════════════════════════════════════
+function startQuiz(doShuffle){
+  const deck=getDeck();
+  quizCards=[...deck.cards];
+  if(doShuffle)quizCards=quizCards.sort(()=>Math.random()-.5);
+  quizIndex=0;quizAnswers={};quizMultiMode=false;
+  showPage('quiz');startTimer();renderQuizCard();
+}
+
+function renderQuizCard(){
+  const card=quizCards[quizIndex];
+  const total=quizCards.length;
+  document.getElementById('quiz-progress').style.width=((quizIndex/total)*100)+'%';
+  document.getElementById('quiz-counter').textContent=`Question ${quizIndex+1} of ${total}${quizMultiMode&&card._deckName?' — '+card._deckName:''}`;
+
+  const qEl=document.getElementById('quiz-question');
+  qEl.innerHTML=card.question||'';renderMath(qEl);
+
+  const imgEl=document.getElementById('quiz-img');
+  if(card.image){imgEl.src=card.image;imgEl.style.display='block';}else imgEl.style.display='none';
+
+  const answered=quizAnswers[card.id];
+  const optC=document.getElementById('quiz-options');
+  optC.innerHTML=card.options.map((opt,i)=>{
+    let cls='quiz-option';
+    if(answered){cls+=' answered';if(i===card.correctIndex)cls+=' correct';else if(answered.selected===i)cls+=' wrong';}
+    return `<button class="${cls}" onclick="selectAnswer(${i})"><span class="opt-key">${LETTERS[i]}</span><span>${opt}</span></button>`;
+  }).join('');
+  renderMath(optC);
+
+  const expBox=document.getElementById('quiz-explanation');
+  if(answered&&card.explanation){
+    document.getElementById('quiz-explanation-text').innerHTML=card.explanation;
+    expBox.style.display='';renderMath(expBox);
+  } else expBox.style.display='none';
+
+  document.getElementById('btn-prev').disabled=quizIndex===0;
+  const nxt=document.getElementById('btn-next');
+  nxt.disabled=!answered;nxt.textContent=(quizIndex+1===total)?'Finish →':'Next →';
+}
+
+function selectAnswer(idx){
+  const card=quizCards[quizIndex];if(quizAnswers[card.id])return;
+  quizAnswers[card.id]={selected:idx,correct:idx===card.correctIndex,time:quizQSec};
+  renderQuizCard();
+}
+function quizNext(){lapQ();if(quizIndex+1>=quizCards.length){stopTimer();showResults();return;}quizIndex++;renderQuizCard();}
+function quizPrev(){if(quizIndex===0)return;quizIndex--;renderQuizCard();}
+function exitQuiz(){stopTimer();quizMultiMode?navTo('decks'):navTo('deck-detail');}
+
+// ════════════════════════════════════════════
+//  MULTI-DECK QUIZ
+// ════════════════════════════════════════════
+function startMultiQuiz(){
+  const checked=[...document.querySelectorAll('.multi-deck-cb:checked')].map(c=>c.value);
+  if(!checked.length){showToast('Select at least one deck',true);return;}
+  let combined=[];
+  checked.forEach(id=>{const d=getDeck(id);d.cards.forEach(c=>combined.push({...c,id:uid(),_deckName:d.name}));});
+  if(document.getElementById('multi-shuffle').checked)combined=combined.sort(()=>Math.random()-.5);
+  quizCards=combined;quizIndex=0;quizAnswers={};quizMultiMode=true;
+  closeModal('modal-multi-quiz');showPage('quiz');startTimer();renderQuizCard();
+}
+
+// ════════════════════════════════════════════
+//  RESULTS
+// ════════════════════════════════════════════
+function showResults(){
+  const total=quizCards.length;
+  const correct=Object.values(quizAnswers).filter(a=>a.correct).length;
+  const wrong=total-correct;
+  const pct=Math.round((correct/total)*100);
+  const r=54,circ=2*Math.PI*r,dash=(pct/100)*circ;
+  const color=pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+
+  document.getElementById('results-deck-name').textContent=quizMultiMode?'Multi-Deck':(getDeck()?.name||'');
+  document.getElementById('score-pct').textContent=pct+'%';
+  document.getElementById('score-pct').style.color=color;
+  document.getElementById('score-arc').setAttribute('stroke',color);
+  document.getElementById('score-arc').setAttribute('stroke-dasharray',`${dash} ${circ}`);
+  document.getElementById('res-total').textContent=total;
+  document.getElementById('res-correct').textContent=correct;
+  document.getElementById('res-wrong').textContent=wrong;
+  document.getElementById('res-time').textContent=fmtTime(quizTotalSec);
+
+  // Per-question time bars
+  const maxT=Math.max(...quizQTimes,1);
+  const timeBars=document.getElementById('time-bars');
+  if(quizQTimes.length){
+    timeBars.innerHTML=`<div class="section-title" style="margin-bottom:10px">⏱ Time Per Question</div>`+
+      quizQTimes.map((t,i)=>{
+        const card=quizCards[i];
+        const ans=quizAnswers[card?.id];
+        const barColor=ans?(ans.correct?'var(--green)':'var(--red)'):'var(--muted)';
+        return `<div class="time-bar-row">
+          <span style="width:28px;color:var(--muted)">Q${i+1}</span>
+          <div class="time-bar-bg"><div class="time-bar-fill" style="width:${(t/maxT)*100}%;background:${barColor}"></div></div>
+          <span style="width:36px;text-align:right">${t}s</span>
+          <span>${ans?markIcon(ans.correct):'—'}</span>
+        </div>`;
+      }).join('');
+  } else timeBars.innerHTML='';
+
+  // Save history
+  const session={id:uid(),deckId:activeDeckId,deckName:quizMultiMode?'Multi-Deck':(getDeck()?.name||''),date:Date.now(),total,correct,wrong,pct,totalTime:quizTotalSec,qTimes:[...quizQTimes]};
+  quizHistory.unshift(session);
+  if(quizHistory.length>100)quizHistory=quizHistory.slice(0,100);
+  saveHistory();showPage('results');
+}
+
+function showReview(){
+  const list=document.getElementById('review-list');
+  list.innerHTML=quizCards.map((card,i)=>{
+    const ans=quizAnswers[card.id];const t=quizQTimes[i];
+    return `<div class="review-card">
+      <div class="review-q">
+        <span style="color:var(--muted);font-family:var(--mono);font-size:10px">Q${i+1}${card._deckName?' ['+esc(card._deckName)+']':''}.</span>
+        ${card.question||''}
+        ${t!==undefined?`<span class="time-chip">⏱${t}s</span>`:''}
+        ${ans?`<span style="margin-left:6px">${markIcon(ans.correct)}</span>`:''}
+      </div>
+      ${card.image?`<img src="${card.image}" class="review-img" alt=""/>`:''}
+      <div class="review-options">${card.options.map((opt,j)=>`<div class="review-opt${j===card.correctIndex?' correct':''}">${LETTERS[j]}. ${opt}</div>`).join('')}</div>
+      ${card.explanation?`<div class="review-exp">${card.explanation}</div>`:''}
+    </div>`;
+  }).join('');
+  renderMath(list);showPage('review');
+}
+
+// ════════════════════════════════════════════
+//  PROGRESS
+// ════════════════════════════════════════════
+function renderProgress(){
+  const el=document.getElementById('progress-list');
+  const empty=document.getElementById('progress-empty');
+  const sum=document.getElementById('progress-summary');
+  renderWeekChart();
+  if(!quizHistory.length){el.innerHTML='';sum.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  const totalQ=quizHistory.reduce((a,s)=>a+s.total,0);
+  const totalC=quizHistory.reduce((a,s)=>a+s.correct,0);
+  const avgPct=Math.round(quizHistory.reduce((a,s)=>a+s.pct,0)/quizHistory.length);
+  const totalTime=quizHistory.reduce((a,s)=>a+s.totalTime,0);
+  const best=Math.max(...quizHistory.map(s=>s.pct));
+  sum.innerHTML=`
+    <div class="card" style="text-align:center"><div style="font-size:24px;font-weight:800;font-family:var(--mono)">${quizHistory.length}</div><div style="font-size:11px;color:var(--muted)">Sessions</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--blue)">${totalQ}</div><div style="font-size:11px;color:var(--muted)">Questions</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--green)">${avgPct}%</div><div style="font-size:11px;color:var(--muted)">Avg Score</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--yellow)">${best}%</div><div style="font-size:11px;color:var(--muted)">Best Score</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--purple)">${fmtTime(totalTime)}</div><div style="font-size:11px;color:var(--muted)">Total Time</div></div>
+  `;
+  el.innerHTML=`<table class="progress-table">
+    <thead><tr><th>Date</th><th>Deck</th><th>Score</th><th>Time</th><th>Result</th></tr></thead>
+    <tbody>${quizHistory.map(s=>{
+      const badge=s.pct>=70?'badge-green':s.pct>=40?'badge-yellow':'badge-red';
+      const d=new Date(s.date);
+      return `<tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:11px">${d.toLocaleDateString()} ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="font-weight:600">${esc(s.deckName)}</td>
+        <td><div style="font-size:12px">${s.correct}/${s.total}</div><div class="prog-bar-mini"><div class="prog-bar-mini-fill" style="width:${s.pct}%;background:${s.pct>=70?'var(--green)':s.pct>=40?'var(--yellow)':'var(--red)'}"></div></div></td>
+        <td style="font-family:var(--mono);font-size:12px">${fmtTime(s.totalTime)}</td>
+        <td><span class="badge ${badge}">${s.pct}%</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+function renderWeekChart(){
+  const svg=document.getElementById('week-chart');
+  if(!svg)return;
+  const W=svg.clientWidth||svg.parentElement.clientWidth||600;
+  const H=240;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+  // Build the last 7 calendar days (oldest first), summing seconds spent per day
+  const days=[];
+  const now=new Date();
+  for(let i=6;i>=0;i--){
+    const d=new Date(now);
+    d.setDate(now.getDate()-i);
+    d.setHours(0,0,0,0);
+    days.push({date:d,seconds:0});
+  }
+  quizHistory.forEach(s=>{
+    const d=new Date(s.date);
+    d.setHours(0,0,0,0);
+    const match=days.find(x=>x.date.getTime()===d.getTime());
+    if(match)match.seconds+=(s.totalTime||0);
+  });
+
+  const padL=46,padR=14,padT=18,padB=34;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+  const maxSec=Math.max(60,...days.map(d=>d.seconds));
+  const niceMax=Math.ceil(maxSec/60/5)*5*60||300; // round up to nearest 5 minutes
+  const barW=plotW/days.length*0.55;
+  const gap=plotW/days.length;
+
+  let gridHtml='';
+  const ySteps=5;
+  for(let i=0;i<=ySteps;i++){
+    const y=padT+plotH-(plotH*i/ySteps);
+    const mins=Math.round((niceMax/60)*(i/ySteps));
+    gridHtml+=`<line class="wc-grid" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>
+      <text class="wc-label" x="${padL-8}" y="${y+3}" text-anchor="end">${mins}m</text>`;
+  }
+
+  let barsHtml='';
+  days.forEach((d,i)=>{
+    const x=padL+gap*i+(gap-barW)/2;
+    const barH=Math.max(2,(d.seconds/niceMax)*plotH);
+    const y=padT+plotH-barH;
+    const label=d.date.toLocaleDateString(undefined,{weekday:'short'});
+    const dnum=d.date.getDate();
+    const isToday=d.date.getTime()===new Date(new Date().setHours(0,0,0,0)).getTime();
+    barsHtml+=`
+      <rect class="wc-bar" x="${x}" y="${y}" width="${barW}" height="${barH}" rx="5" style="${isToday?'fill:#2dd4bf':''}"/>
+      ${d.seconds>0?`<text class="wc-value" x="${x+barW/2}" y="${y-6}" text-anchor="middle">${fmtTime(d.seconds)}</text>`:''}
+      <text class="wc-label" x="${x+barW/2}" y="${H-padB+16}" text-anchor="middle">${label}</text>
+      <text class="wc-label" x="${x+barW/2}" y="${H-padB+28}" text-anchor="middle" opacity=".7">${dnum}</text>
+    `;
+  });
+
+  svg.innerHTML=`
+    <line class="wc-axis" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}"/>
+    <line class="wc-axis" x1="${padL}" y1="${padT+plotH}" x2="${W-padR}" y2="${padT+plotH}"/>
+    ${gridHtml}
+    ${barsHtml}
+  `;
+}
+function clearHistory(){
+  showConfirm('Clear all quiz history? This cannot be undone.',()=>{
+    quizHistory=[];saveHistory();renderProgress();showToast('History cleared.');
+  });
+}
+
+// ════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════
+let dayViewDate=null;
+let dayClickTimer=null;
+
+function renderCalendar(){
+  const now=new Date();
+  const firstDay=new Date(calYear,calMonth,1);
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const startDow=firstDay.getDay();
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent=MONTHS[calMonth]+' '+calYear;
+  let html='';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{html+=`<div class="cal-day-label">${d}</div>`;});
+  const prevDays=new Date(calYear,calMonth,0).getDate();
+  for(let i=startDow-1;i>=0;i--)html+=`<div class="cal-day other-month"><div class="cal-date">${prevDays-i}</div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvts=calEvents.filter(e=>e.date===ds);
+    const isToday=d===now.getDate()&&calMonth===now.getMonth()&&calYear===now.getFullYear();
+    html+=`<div class="cal-day${isToday?' today':''}${dayEvts.length?' has-event':''}" onclick="calDayClickDebounced('${ds}')" ondblclick="openDayView('${ds}')">
+      <div class="cal-date">${d}</div>
+      <span class="cal-day-hint">2× open day</span>
+      ${dayEvts.slice(0,2).map(e=>`<div class="cal-evt-chip" style="background:${e.color}22;color:${e.color}">${esc(e.title)}</div>`).join('')}
+      ${dayEvts.length>2?`<div class="cal-evt-chip" style="background:var(--border);color:var(--muted)">+${dayEvts.length-2} more</div>`:''}
+    </div>`;
+  }
+  const total=startDow+daysInMonth;const remaining=(7-total%7)%7;
+  for(let d=1;d<=remaining;d++)html+=`<div class="cal-day other-month"><div class="cal-date">${d}</div></div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+  renderEventsList(null);
+}
+function calNav(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+// Single click shows the day's events below; double click (caught by ondblclick)
+// opens the full hour-by-hour day view. We debounce the single click slightly
+// so it doesn't fire right before a double-click.
+function calDayClickDebounced(ds){
+  clearTimeout(dayClickTimer);
+  dayClickTimer=setTimeout(()=>calDayClick(ds),200);
+}
+function calDayClick(ds){
+  renderEventsList(ds);
+  const d=new Date(ds+'T00:00:00');
+  document.getElementById('cal-events-title').textContent='Events — '+d.toLocaleDateString();
+}
+function renderEventsList(ds){
+  const list=document.getElementById('events-list');
+  const evts=ds?calEvents.filter(e=>e.date===ds).sort((a,b)=>(a.time||'').localeCompare(b.time||'')):[...calEvents].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,30);
+  if(!evts.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No events</div>';return;}
+  list.innerHTML=evts.map(e=>`
+    <div class="event-item">
+      <div class="event-dot" style="background:${e.color}"></div>
+      <div style="flex:1;cursor:pointer" onclick="openAddEventModal(null,null,'${e.id}')">
+        <div class="event-title">${esc(e.title)}</div>
+        <div class="event-meta">${e.date}${e.time?' · '+e.time:''}${e.note?'<br>'+esc(e.note):''}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="deleteEvent('${e.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </div>
+  `).join('');
+}
+
+// ── Add / Edit Event modal ──────────────────────────────────────────────────
+function openAddEventModal(prefillDate,prefillTime,editId){
+  const titleEl=document.getElementById('event-modal-title');
+  const delBtn=document.getElementById('event-delete-btn');
+  document.getElementById('event-id').value=editId||'';
+  if(editId){
+    const e=calEvents.find(x=>x.id===editId);
+    if(e){
+      document.getElementById('event-title').value=e.title;
+      document.getElementById('event-date').value=e.date;
+      document.getElementById('event-time').value=e.time||'';
+      document.getElementById('event-duration').value=e.duration||30;
+      document.getElementById('event-note').value=e.note||'';
+      const radio=document.querySelector(`input[name="event-color"][value="${e.color}"]`);
+      if(radio)radio.checked=true;
+    }
+    titleEl.innerHTML='<svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Event';
+    delBtn.style.display='';
+  } else {
+    document.getElementById('event-title').value='';
+    document.getElementById('event-date').value=prefillDate||'';
+    document.getElementById('event-time').value=prefillTime||'';
+    document.getElementById('event-duration').value=30;
+    document.getElementById('event-note').value='';
+    document.querySelector('input[name="event-color"][value="#4f7dff"]').checked=true;
+    titleEl.innerHTML='<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Add Event';
+    delBtn.style.display='none';
+  }
+  openModal('modal-add-event');
+}
+function saveEvent(){
+  const title=document.getElementById('event-title').value.trim();
+  const date=document.getElementById('event-date').value;
+  if(!title||!date){showToast('Title and date are required',true);return;}
+  const color=document.querySelector('input[name="event-color"]:checked')?.value||'#4f7dff';
+  const time=document.getElementById('event-time').value;
+  const duration=parseInt(document.getElementById('event-duration').value)||30;
+  const note=document.getElementById('event-note').value.trim();
+  const editId=document.getElementById('event-id').value;
+  if(editId){
+    const idx=calEvents.findIndex(e=>e.id===editId);
+    if(idx>-1)calEvents[idx]={...calEvents[idx],title,date,time,duration,color,note};
+  } else {
+    calEvents.push({id:uid(),title,date,time,duration,color,note});
+  }
+  saveEvents();closeModal('modal-add-event');
+  renderCalendar();
+  if(dayViewDate)renderDayView();
+  showToast(editId?'Event updated!':'Event saved!');
+}
+function deleteEventFromModal(){
+  const editId=document.getElementById('event-id').value;
+  if(editId)deleteEvent(editId);
+  closeModal('modal-add-event');
+}
+function deleteEvent(id){
+  calEvents=calEvents.filter(e=>e.id!==id);saveEvents();renderCalendar();
+  if(dayViewDate)renderDayView();
+}
+
+// ── Day View — full 24-hour timeline, Google-Calendar style ────────────────
+function openDayView(ds){
+  clearTimeout(dayClickTimer);
+  dayViewDate=ds;
+  renderDayView();
+  openModal('modal-day-view');
+  setTimeout(()=>{
+    const body=document.getElementById('dayview-body');
+    const now=new Date();
+    const isToday=ds===fmtDate(now);
+    body.scrollTop=Math.max(0,((isToday?now.getHours():8)-1)*60);
+  },60);
+}
+function dayNav(dir){
+  const d=new Date(dayViewDate+'T00:00:00');
+  d.setDate(d.getDate()+dir);
+  dayViewDate=fmtDate(d);
+  renderDayView();
+}
+function fmtDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function renderDayView(){
+  const d=new Date(dayViewDate+'T00:00:00');
+  document.getElementById('dayview-date-label').textContent=d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const timeline=document.getElementById('dayview-timeline');
+  let rows='';
+  for(let h=0;h<24;h++){
+    const label=h===0?'12 AM':h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+    rows+=`<div class="dv-hour-row">
+      <div class="dv-hour-label">${label}</div>
+      <div class="dv-hour-slot" onclick="dvSlotClick(event,${h})"></div>
+    </div>`;
+  }
+  timeline.innerHTML=rows;
+
+  // Position events absolutely over the 1440px-tall (24×60) timeline
+  const evts=calEvents.filter(e=>e.date===dayViewDate);
+  evts.forEach(e=>{
+    const [hh,mm]=(e.time||'00:00').split(':').map(Number);
+    const top=(hh*60+(mm||0));
+    const dur=Math.max(20,e.duration||30);
+    const block=document.createElement('div');
+    block.className='dv-event';
+    block.style.top=top+'px';
+    block.style.height=Math.max(20,dur)+'px';
+    block.style.background=e.color+'26';
+    block.style.borderLeftColor=e.color;
+    block.style.color=e.color;
+    block.onclick=(ev)=>{ev.stopPropagation();openAddEventModal(null,null,e.id);};
+    block.innerHTML=`<span class="dv-event-time">${e.time||'All day'}${e.duration?' · '+e.duration+'m':''}</span>${esc(e.title)}`;
+    timeline.appendChild(block);
+  });
+
+  // "Now" indicator line, only on today
+  const now=new Date();
+  if(dayViewDate===fmtDate(now)){
+    const line=document.createElement('div');
+    line.className='dv-now-line';
+    line.style.top=(now.getHours()*60+now.getMinutes())+'px';
+    timeline.appendChild(line);
+  }
+}
+function dvSlotClick(ev,hour){
+  const slot=ev.currentTarget;
+  const rect=slot.getBoundingClientRect();
+  const offsetY=ev.clientY-rect.top;
+  const minute=offsetY<30?0:30; // snap to :00 or :30 half-hour slot
+  const time=String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');
+  openAddEventModal(dayViewDate,time);
+}
+
+
+// ════════════════════════════════════════════
+//  TO-DO
+// ════════════════════════════════════════════
+function addTodo(){
+  const text=document.getElementById('todo-new-text').value.trim();
+  if(!text){showToast('Enter a task',true);return;}
+  todos.push({id:uid(),text,done:false,due:document.getElementById('todo-new-date').value,priority:document.getElementById('todo-new-pri').value,createdAt:Date.now()});
+  saveTodos();document.getElementById('todo-new-text').value='';renderTodos();showToast('Task added!');
+}
+function toggleTodo(id){
+  const t=todos.find(t=>t.id===id);
+  if(t){t.done=!t.done;if(t.done)fireConfetti();}
+  saveTodos();renderTodos();
+}
+function fireConfetti(){
+  const colors=['#2dd4bf','#4f7dff','#22c55e','#f59e0b','#ef4444','#a855f7'];
+  const container=document.createElement('div');
+  container.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;overflow:hidden';
+  document.body.appendChild(container);
+  const W=window.innerWidth,H=window.innerHeight;
+  for(let i=0;i<70;i++){
+    const piece=document.createElement('div');
+    const size=Math.random()*8+5;
+    piece.style.position='absolute';
+    piece.style.top='-20px';
+    piece.style.left=(Math.random()*W)+'px';
+    piece.style.width=size+'px';
+    piece.style.height=(size*0.45)+'px';
+    piece.style.background=colors[Math.floor(Math.random()*colors.length)];
+    piece.style.borderRadius='2px';
+    piece.style.opacity='.95';
+    container.appendChild(piece);
+    const duration=1300+Math.random()*1100;
+    const delay=Math.random()*250;
+    const driftX=Math.random()*140-70;
+    const rot=360+Math.random()*360;
+    if(piece.animate){
+      piece.animate([
+        {transform:'translate(0,0) rotate(0deg)',opacity:1},
+        {transform:`translate(${driftX}px, ${H+40}px) rotate(${rot}deg)`,opacity:.25}
+      ],{duration,delay,easing:'cubic-bezier(.25,.6,.4,1)',fill:'forwards'});
+    } else {
+      // Fallback for browsers without the Web Animations API
+      piece.style.transition=`transform ${duration}ms cubic-bezier(.25,.6,.4,1) ${delay}ms, opacity ${duration}ms linear ${delay}ms`;
+      requestAnimationFrame(()=>{piece.style.transform=`translate(${driftX}px, ${H+40}px) rotate(${rot}deg)`;piece.style.opacity='.25';});
+    }
+  }
+  setTimeout(()=>container.remove(),2300);
+}
+function deleteTodo(id){todos=todos.filter(t=>t.id!==id);saveTodos();renderTodos();}
+function clearDoneTodos(){todos=todos.filter(t=>!t.done);saveTodos();renderTodos();showToast('Done tasks cleared!');}
+
+// ════════════════════════════════════════════
+//  DOUBT SOLVER
+// ════════════════════════════════════════════
+// A static page like this can't legally embed another search engine's
+// results (they block being framed), so instead we build the right search
+// URL for the engine you pick, open it in a new tab, and keep a local
+// history of what you've asked so you can revisit or re-search it later.
+const DOUBT_ENGINES={
+  google:  q=>`https://www.google.com/search?q=${encodeURIComponent(q)}`,
+  scholar: q=>`https://scholar.google.com/scholar?q=${encodeURIComponent(q)}`,
+  youtube: q=>`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+  wolfram: q=>`https://www.wolframalpha.com/input?i=${encodeURIComponent(q)}`,
+  duck:    q=>`https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+};
+const DOUBT_ENGINE_LABEL={google:'Google',scholar:'Google Scholar',youtube:'YouTube',wolfram:'Wolfram Alpha',duck:'DuckDuckGo'};
+
+function searchDoubt(engine){
+  const text=document.getElementById('doubt-text').value.trim();
+  if(!text){showToast('Type your doubt first',true);return;}
+  saveDoubtEntry(text,engine);
+  window.open(DOUBT_ENGINES[engine](text),'_blank');
+}
+function saveDoubtEntry(text,engine){
+  // Avoid piling up duplicate entries if you just re-search the same thing
+  const existing=doubts.find(d=>d.text===text);
+  if(existing){existing.lastEngine=engine;existing.ts=Date.now();}
+  else doubts.unshift({id:uid(),text,lastEngine:engine,ts:Date.now()});
+  if(doubts.length>50)doubts=doubts.slice(0,50);
+  saveDoubts();
+  renderDoubtHistory();
+}
+function rerunDoubt(id,engine){
+  const d=doubts.find(x=>x.id===id);
+  if(!d)return;
+  document.getElementById('doubt-text').value=d.text;
+  window.open(DOUBT_ENGINES[engine||d.lastEngine||'google'](d.text),'_blank');
+  d.lastEngine=engine||d.lastEngine;d.ts=Date.now();saveDoubts();renderDoubtHistory();
+}
+function deleteDoubt(id){doubts=doubts.filter(d=>d.id!==id);saveDoubts();renderDoubtHistory();}
+function renderDoubtHistory(){
+  const box=document.getElementById('doubt-history');
+  const empty=document.getElementById('doubt-empty');
+  if(!box)return;
+  if(!doubts.length){box.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  box.innerHTML=doubts.map(d=>`
+    <div class="doubt-item">
+      <div class="doubt-item-text" onclick="document.getElementById('doubt-text').value=${JSON.stringify(d.text)}">
+        ${esc(d.text)}
+        <div class="doubt-item-time">Asked ${new Date(d.ts).toLocaleString()} · last searched on ${DOUBT_ENGINE_LABEL[d.lastEngine]||'Google'}</div>
+      </div>
+      <div class="doubt-item-actions">
+        <button class="doubt-mini-btn" title="Search again" onclick="rerunDoubt('${d.id}')"><svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+        <button class="doubt-mini-btn" title="Delete" onclick="deleteDoubt('${d.id}')"><svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+//  MIND MAPS
+// ════════════════════════════════════════════
+let activeMindMapId=null;
+let mmSelectedNodeId=null,mmConnectMode=false,mmConnectFromId=null;
+let mmDragNodeId=null,mmDragStart=null,mmDragNodeStart=null;
+let mmPanning=false,mmPanStart=null,mmPanStartOffset=null;
+let mmActiveColor='#2dd4bf';
+let mmEditingNodeId=null;
+function mmOpenNodeEdit(id){
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  const node=mm&&mm.nodes.find(n=>n.id===id);
+  if(!node)return;
+  mmEditingNodeId=id;
+  document.getElementById('mm-node-text-input').value=node.text;
+  openModal('modal-mm-node');
+  setTimeout(()=>{const f=document.getElementById('mm-node-text-input');f.focus();f.select();},60);
+}
+function mmSaveNodeText(){
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  const node=mm&&mm.nodes.find(n=>n.id===mmEditingNodeId);
+  const val=document.getElementById('mm-node-text-input').value.trim();
+  if(node&&val){node.text=val;saveMindMaps();renderMindMapCanvas();}
+  closeModal('modal-mm-node');
+}
+
+function renderMindMapList(){
+  const grid=document.getElementById('mindmap-grid');
+  const empty=document.getElementById('mindmap-empty');
+  if(!mindMaps.length){grid.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  grid.innerHTML=mindMaps.map(m=>`
+    <div class="deck-card" onclick="openMindMapEditor('${m.id}')">
+      <div style="font-size:16px;font-weight:800;margin-bottom:6px">${esc(m.title)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">${m.nodes.length} node${m.nodes.length!==1?'s':''} · ${m.edges.length} connection${m.edges.length!==1?'s':''}</div>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteMindMap('${m.id}')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+    </div>
+  `).join('');
+}
+function openNewMindMapModal(){document.getElementById('new-mindmap-title').value='';openModal('modal-new-mindmap');}
+function createMindMap(){
+  const title=document.getElementById('new-mindmap-title').value.trim()||'Untitled Mind Map';
+  const id=uid();
+  mindMaps.push({id,title,nodes:[{id:uid(),x:0,y:0,text:title,color:'#2dd4bf'}],edges:[],pan:{x:320,y:220},createdAt:Date.now()});
+  saveMindMaps();closeModal('modal-new-mindmap');
+  openMindMapEditor(id);
+}
+function deleteMindMap(id){
+  showConfirm('Delete this mind map? This cannot be undone.',()=>{
+    mindMaps=mindMaps.filter(m=>m.id!==id);saveMindMaps();renderMindMapList();
+  });
+}
+function openMindMapEditor(id){
+  activeMindMapId=id;
+  mmSelectedNodeId=null;mmConnectMode=false;mmConnectFromId=null;
+  showPage('mindmap-editor');
+  const btn=document.getElementById('mm-connect-btn');
+  btn.classList.remove('btn-primary');btn.classList.add('btn-ghost');
+  setTimeout(renderMindMapCanvas,30);
+}
+function renameMindMap(){
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  if(!mm)return;
+  mm.title=document.getElementById('mm-title-input').value.trim()||mm.title;
+  saveMindMaps();
+}
+function mmAddNode(){
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  if(!mm)return;
+  const svg=document.getElementById('mm-canvas');
+  const rect=svg.getBoundingClientRect();
+  const pan=mm.pan||{x:320,y:220};
+  const x=rect.width/2-pan.x+(Math.random()*70-35);
+  const y=rect.height/2-pan.y+(Math.random()*70-35);
+  const node={id:uid(),x,y,text:'New idea',color:mmActiveColor};
+  mm.nodes.push(node);
+  mmSelectedNodeId=node.id;
+  saveMindMaps();renderMindMapCanvas();
+}
+function mmToggleConnectMode(){
+  mmConnectMode=!mmConnectMode;
+  mmConnectFromId=null;
+  const btn=document.getElementById('mm-connect-btn');
+  btn.classList.toggle('btn-primary',mmConnectMode);
+  btn.classList.toggle('btn-ghost',!mmConnectMode);
+  renderMindMapCanvas();
+}
+function mmSetNodeColor(color){
+  mmActiveColor=color;
+  if(mmSelectedNodeId){
+    const mm=mindMaps.find(m=>m.id===activeMindMapId);
+    const node=mm&&mm.nodes.find(n=>n.id===mmSelectedNodeId);
+    if(node){node.color=color;saveMindMaps();renderMindMapCanvas();}
+  }
+}
+function mmDeleteSelected(){
+  if(!mmSelectedNodeId){showToast('Click a node to select it first',true);return;}
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  mm.nodes=mm.nodes.filter(n=>n.id!==mmSelectedNodeId);
+  mm.edges=mm.edges.filter(e=>e.from!==mmSelectedNodeId&&e.to!==mmSelectedNodeId);
+  mmSelectedNodeId=null;
+  saveMindMaps();renderMindMapCanvas();
+}
+function mmGetMousePos(e){
+  const svg=document.getElementById('mm-canvas');
+  const rect=svg.getBoundingClientRect();
+  return {x:e.clientX-rect.left,y:e.clientY-rect.top};
+}
+function mmWrapText(text,maxChars){
+  const words=String(text||'').split(/\s+/).filter(Boolean);
+  const lines=[];let cur='';
+  words.forEach(w=>{
+    const test=(cur+' '+w).trim();
+    if(test.length>maxChars&&cur){lines.push(cur);cur=w;}
+    else cur=test;
+  });
+  if(cur)lines.push(cur);
+  if(!lines.length)lines.push('');
+  return lines.slice(0,5);
+}
+function renderMindMapCanvas(){
+  const mm=mindMaps.find(m=>m.id===activeMindMapId);
+  if(!mm)return;
+  document.getElementById('mm-title-input').value=mm.title;
+  const svg=document.getElementById('mm-canvas');
+  const pan=mm.pan||{x:320,y:220};
+  const edgesHtml=mm.edges.map(e=>{
+    const a=mm.nodes.find(n=>n.id===e.from),b=mm.nodes.find(n=>n.id===e.to);
+    if(!a||!b)return '';
+    return `<line class="mm-edge" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`;
+  }).join('');
+  const nodesHtml=mm.nodes.map(n=>{
+    const lines=mmWrapText(n.text,18);
+    const longest=Math.max(...lines.map(l=>l.length),4);
+    const w=Math.max(110,Math.min(260,longest*8.5+36));
+    const h=lines.length*20+30;
+    const sel=n.id===mmSelectedNodeId||n.id===mmConnectFromId;
+    const startDy=-(lines.length-1)*9;
+    const tspans=lines.map((l,i)=>`<tspan x="${n.x}" dy="${i===0?startDy:18}">${esc(l)}</tspan>`).join('');
+    return `<g class="mm-node" data-id="${n.id}">
+      <rect class="mm-node-rect${sel?' mm-node-selected':''}" x="${n.x-w/2}" y="${n.y-h/2}" width="${w}" height="${h}" rx="14" fill="${n.color||'#2dd4bf'}"/>
+      <text class="mm-node-text" x="${n.x}" y="${n.y+4}" text-anchor="middle">${tspans}</text>
+    </g>`;
+  }).join('');
+  svg.innerHTML=`<g id="mm-world" transform="translate(${pan.x},${pan.y})">${edgesHtml}${nodesHtml}</g>`;
+  attachMmNodeEvents();
+}
+function attachMmNodeEvents(){
+  const svg=document.getElementById('mm-canvas');
+  svg.querySelectorAll('.mm-node').forEach(g=>{
+    g.addEventListener('mousedown',e=>{
+      e.stopPropagation();
+      const id=g.dataset.id;
+      const mm=mindMaps.find(m=>m.id===activeMindMapId);
+      if(mmConnectMode){
+        if(!mmConnectFromId){mmConnectFromId=id;renderMindMapCanvas();}
+        else if(mmConnectFromId!==id){
+          if(!mm.edges.some(ed=>(ed.from===mmConnectFromId&&ed.to===id)||(ed.from===id&&ed.to===mmConnectFromId))){
+            mm.edges.push({from:mmConnectFromId,to:id});
+          }
+          mmConnectFromId=null;saveMindMaps();renderMindMapCanvas();
+        }
+        return;
+      }
+      mmSelectedNodeId=id;
+      mmDragNodeId=id;
+      mmDragStart=mmGetMousePos(e);
+      const node=mm.nodes.find(n=>n.id===id);
+      mmDragNodeStart={x:node.x,y:node.y};
+      renderMindMapCanvas();
+    });
+    g.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      mmOpenNodeEdit(g.dataset.id);
+    });
+  });
+  svg.onmousedown=(e)=>{
+    if(e.target===svg||e.target.id==='mm-world'){
+      const mm=mindMaps.find(m=>m.id===activeMindMapId);
+      mmPanning=true;
+      mmPanStart=mmGetMousePos(e);
+      mmPanStartOffset={...(mm.pan||{x:320,y:220})};
+      document.getElementById('mm-canvas-wrap').classList.add('panning');
+      mmSelectedNodeId=null;
+    }
+  };
+}
+document.addEventListener('mousemove',e=>{
+  if(mmDragNodeId){
+    const mm=mindMaps.find(m=>m.id===activeMindMapId);
+    if(!mm)return;
+    const pos=mmGetMousePos(e);
+    const node=mm.nodes.find(n=>n.id===mmDragNodeId);
+    if(!node)return;
+    node.x=mmDragNodeStart.x+(pos.x-mmDragStart.x);
+    node.y=mmDragNodeStart.y+(pos.y-mmDragStart.y);
+    renderMindMapCanvas();
+  } else if(mmPanning){
+    const mm=mindMaps.find(m=>m.id===activeMindMapId);
+    if(!mm)return;
+    const pos=mmGetMousePos(e);
+    mm.pan={x:mmPanStartOffset.x+(pos.x-mmPanStart.x),y:mmPanStartOffset.y+(pos.y-mmPanStart.y)};
+    renderMindMapCanvas();
+  }
+});
+document.addEventListener('mouseup',()=>{
+  if(mmDragNodeId){mmDragNodeId=null;saveMindMaps();}
+  if(mmPanning){mmPanning=false;saveMindMaps();const w=document.getElementById('mm-canvas-wrap');if(w)w.classList.remove('panning');}
+});
+
+// ════════════════════════════════════════════
+//  VAULT (PDFs & images, stored locally via IndexedDB)
+// ════════════════════════════════════════════
+let vaultDB=null,vaultPreviewId=null;
+function openVaultDB(){
+  return new Promise((resolve,reject)=>{
+    if(vaultDB){resolve(vaultDB);return;}
+    if(!window.indexedDB){reject('IndexedDB not supported');return;}
+    const req=indexedDB.open('mcq-vault-db',1);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});
+    };
+    req.onsuccess=e=>{vaultDB=e.target.result;resolve(vaultDB);};
+    req.onerror=e=>reject(e);
+  });
+}
+function vaultUpload(fileList){
+  const files=Array.from(fileList||[]);
+  if(!files.length)return;
+  openVaultDB().then(db=>{
+    let done=0;
+    files.forEach(file=>{
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const rec={id:uid(),name:file.name,type:file.type||'application/octet-stream',size:file.size,dataUrl:reader.result,addedAt:Date.now()};
+        const tx=db.transaction('files','readwrite');
+        tx.objectStore('files').put(rec);
+        tx.oncomplete=()=>{done++;if(done===files.length){renderVault();showToast(`Added ${files.length} file${files.length!==1?'s':''} to vault`);}};
+        tx.onerror=()=>showToast('Could not save '+file.name+' (storage full?)',true);
+      };
+      reader.onerror=()=>showToast('Failed to read '+file.name,true);
+      reader.readAsDataURL(file);
+    });
+  }).catch(()=>showToast('Vault storage is not available in this browser',true));
+  document.getElementById('vault-file-input').value='';
+}
+function vaultGetAll(cb){
+  openVaultDB().then(db=>{
+    const tx=db.transaction('files','readonly');
+    const req=tx.objectStore('files').getAll();
+    req.onsuccess=()=>cb(req.result.sort((a,b)=>b.addedAt-a.addedAt));
+  }).catch(()=>cb([]));
+}
+function vaultFmtSize(bytes){
+  if(bytes<1024)return bytes+' B';
+  if(bytes<1024*1024)return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+function renderVault(){
+  vaultGetAll(files=>{
+    const grid=document.getElementById('vault-grid');
+    const empty=document.getElementById('vault-empty');
+    if(!grid)return;
+    if(!files.length){grid.innerHTML='';empty.style.display='';return;}
+    empty.style.display='none';
+    grid.innerHTML=files.map(f=>{
+      const isImg=f.type.startsWith('image/');
+      return `<div class="vault-card" onclick="openVaultPreview('${f.id}')">
+        <div class="vault-thumb">
+          ${isImg?`<img src="${f.dataUrl}" alt=""/>`:`<svg class="icon-lg" viewBox="0 0 24 24" style="stroke:var(--red)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`}
+        </div>
+        <div class="vault-meta">
+          <div class="vault-name">${esc(f.name)}</div>
+          <div class="vault-sub"><span>${vaultFmtSize(f.size)}</span><span>${new Date(f.addedAt).toLocaleDateString()}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+function openVaultPreview(id){
+  vaultGetAll(files=>{
+    const f=files.find(x=>x.id===id);
+    if(!f)return;
+    vaultPreviewId=id;
+    document.getElementById('vault-preview-title').textContent=f.name;
+    const body=document.getElementById('vault-preview-body');
+    if(f.type.startsWith('image/'))body.innerHTML=`<img src="${f.dataUrl}" style="max-width:100%;max-height:60vh;border-radius:10px"/>`;
+    else if(f.type==='application/pdf')body.innerHTML=`<iframe src="${f.dataUrl}" style="width:100%;height:60vh;border:1px solid var(--border);border-radius:10px;background:#fff"></iframe>`;
+    else body.innerHTML=`<div style="padding:30px;color:var(--muted)">No inline preview for this file type — use Download to view it.</div>`;
+    const dl=document.getElementById('vault-preview-download');
+    dl.href=f.dataUrl;dl.setAttribute('download',f.name);
+    openModal('modal-vault-preview');
+  });
+}
+function vaultDeleteFromPreview(){
+  if(!vaultPreviewId)return;
+  openVaultDB().then(db=>{
+    const tx=db.transaction('files','readwrite');
+    tx.objectStore('files').delete(vaultPreviewId);
+    tx.oncomplete=()=>{closeModal('modal-vault-preview');vaultPreviewId=null;renderVault();showToast('File deleted');};
+  });
+}
+
+// ════════════════════════════════════════════
+//  NOTES (under Vault)
+// ════════════════════════════════════════════
+function openNewNoteModal(){
+  document.getElementById('note-id').value='';
+  document.getElementById('note-title-input').value='';
+  document.getElementById('note-content-input').innerHTML='';
+  document.getElementById('note-modal-title').innerHTML='<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg> New Note';
+  document.getElementById('note-delete-btn').style.display='none';
+  openModal('modal-note');
+}
+function openEditNote(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n)return;
+  document.getElementById('note-id').value=n.id;
+  document.getElementById('note-title-input').value=n.title;
+  document.getElementById('note-content-input').innerHTML=n.html||'';
+  document.getElementById('note-modal-title').innerHTML='<svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Note';
+  document.getElementById('note-delete-btn').style.display='';
+  openModal('modal-note');
+}
+function saveNoteModal(){
+  const id=document.getElementById('note-id').value;
+  const title=document.getElementById('note-title-input').value.trim()||'Untitled Note';
+  const html=document.getElementById('note-content-input').innerHTML;
+  const text=document.getElementById('note-content-input').innerText.trim();
+  if(!text){showToast('Write something first',true);return;}
+  if(id){
+    const n=notes.find(x=>x.id===id);
+    if(n){n.title=title;n.html=html;n.updatedAt=Date.now();}
+  } else {
+    notes.unshift({id:uid(),title,html,updatedAt:Date.now()});
+  }
+  saveNotes();closeModal('modal-note');renderNotes();showToast(id?'Note updated!':'Note saved!');
+}
+function deleteNoteFromModal(){
+  const id=document.getElementById('note-id').value;
+  if(!id)return;
+  closeModal('modal-note');
+  showConfirm('Delete this note? This cannot be undone.',()=>{
+    notes=notes.filter(n=>n.id!==id);saveNotes();renderNotes();showToast('Note deleted.');
+  });
+}
+function deleteNote(id){
+  showConfirm('Delete this note? This cannot be undone.',()=>{
+    notes=notes.filter(n=>n.id!==id);saveNotes();renderNotes();showToast('Note deleted.');
+  });
+}
+function renderNotes(){
+  const grid=document.getElementById('notes-grid');
+  const empty=document.getElementById('notes-empty');
+  if(!grid)return;
+  if(!notes.length){grid.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  grid.innerHTML=notes.map(n=>`
+    <div class="note-card" onclick="openEditNote('${n.id}')">
+      <div class="note-card-title">${esc(n.title)}</div>
+      <div class="note-card-snippet">${n.html||''}</div>
+      <div class="note-card-time">Updated ${new Date(n.updatedAt).toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+function setTodoFilter(f){
+  todoFilter=f;
+  ['all','active','done','high'].forEach(x=>{const el=document.getElementById('tf-'+x);if(el)el.classList.toggle('active',x===f);});
+  renderTodos();
+}
+function renderTodos(){
+  let filtered=todos;
+  if(todoFilter==='active')filtered=todos.filter(t=>!t.done);
+  else if(todoFilter==='done')filtered=todos.filter(t=>t.done);
+  else if(todoFilter==='high')filtered=todos.filter(t=>t.priority==='high'&&!t.done);
+  filtered=[...filtered].sort((a,b)=>{
+    if(a.done!==b.done)return a.done?1:-1;
+    const po={high:0,med:1,low:2};return (po[a.priority]||1)-(po[b.priority]||1);
+  });
+  const list=document.getElementById('todo-list');
+  const empty=document.getElementById('todo-empty');
+  if(!filtered.length){list.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  const priLabel={high:'pri-high High',med:'pri-med Med',low:'pri-low Low'};
+  list.innerHTML=filtered.map(t=>`
+    <div class="todo-item${t.done?' done':''}">
+      <input type="checkbox" class="todo-cb" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')"/>
+      <div class="todo-text">${esc(t.text)}</div>
+      ${t.due?`<div class="todo-due"><svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> ${t.due}</div>`:''}
+      <span class="todo-pri ${priLabel[t.priority].split(' ')[0]}">${priLabel[t.priority].split(' ').slice(1).join(' ')}</span>
+      <button class="btn btn-danger btn-sm" style="padding:3px 7px" onclick="deleteTodo('${t.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+//  BULK IMPORT
+// ════════════════════════════════════════════
+function openCSVModal(){populateDeckSelect();openModal('modal-csv');}
+function switchImportTab(tab){
+  document.getElementById('import-tab-csv').style.display=tab==='csv'?'':'none';
+  document.getElementById('import-tab-text').style.display=tab==='text'?'':'none';
+  document.getElementById('tab-csv').classList.toggle('active',tab==='csv');
+  document.getElementById('tab-text').classList.toggle('active',tab==='text');
+}
+function populateDeckSelect(){
+  const sel=document.getElementById('csv-deck-select');
+  sel.innerHTML=decks.length?decks.map(d=>`<option value="${d.id}"${d.id===activeDeckId?' selected':''}>${esc(d.name)}</option>`).join(''):
+    '<option value="">— Create a deck first —</option>';
+}
+function createDeckForImport(){
+  showTextInput('New deck name','',name=>{
+    const deck={id:uid(),name:name.trim(),cards:[],createdAt:Date.now()};
+    decks.push(deck);save();populateDeckSelect();
+    document.getElementById('csv-deck-select').value=deck.id;showToast('Deck created!');
+  });
+}
+function runBulkImport(){
+  const deckId=document.getElementById('csv-deck-select').value;
+  const deck=getDeck(deckId);if(!deck){showToast('Select a deck first',true);return;}
+  const isCSV=document.getElementById('tab-csv').classList.contains('active');
+  let cards=[];
+  if(isCSV){
+    const raw=document.getElementById('csv-input').value.trim();if(!raw){showToast('Paste CSV first',true);return;}
+    raw.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
+      const cols=parseCSVLine(line);if(cols.length<5)return;
+      const [q,a,b,c,d,idx,exp]=cols;
+      if(q&&a&&b&&c&&d)cards.push({id:uid(),question:esc(q.trim()),options:[a,b,c,d].map(s=>esc(s.trim())),correctIndex:Math.min(3,Math.max(0,parseInt(idx)||0)),explanation:esc((exp||'').trim()),image:null});
+    });
+  } else {
+    const raw=document.getElementById('text-input').value.trim();if(!raw){showToast('Paste questions first',true);return;}
+    raw.split(/\n\s*\n/).forEach(block=>{
+      const lines=block.trim().split('\n').map(l=>l.trim());
+      let q='',opts=['','','',''],ci=0,exp='';
+      lines.forEach(line=>{
+        if(/^Q:/i.test(line))q=line.replace(/^Q:\s*/i,'');
+        else if(/^A:/i.test(line))opts[0]=line.replace(/^A:\s*/i,'');
+        else if(/^B:/i.test(line))opts[1]=line.replace(/^B:\s*/i,'');
+        else if(/^C:/i.test(line))opts[2]=line.replace(/^C:\s*/i,'');
+        else if(/^D:/i.test(line))opts[3]=line.replace(/^D:\s*/i,'');
+        else if(/^ANS:/i.test(line)){const a=line.replace(/^ANS:\s*/i,'').trim().toUpperCase();ci=Math.max(0,LETTERS.indexOf(a));}
+        else if(/^EXP:/i.test(line))exp=line.replace(/^EXP:\s*/i,'');
+      });
+      if(q&&opts.every(o=>o))cards.push({id:uid(),question:esc(q),options:opts.map(o=>esc(o)),correctIndex:ci,explanation:esc(exp),image:null});
+    });
+  }
+  if(!cards.length){showToast('No valid cards found — check format',true);return;}
+  deck.cards.push(...cards);save();
+  closeModal('modal-csv');document.getElementById('csv-input').value='';document.getElementById('text-input').value='';
+  renderDecks();if(activeDeckId===deckId)renderDeck();
+  showToast(`Imported ${cards.length} card${cards.length!==1?'s':''}!`);
+}
+function parseCSVLine(line){
+  const res=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"'){q=!q;continue;}
+    if(line[i]===','&&!q){res.push(cur);cur='';continue;}
+    cur+=line[i];
+  }
+  res.push(cur);return res;
+}
+
+// ════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+loadAll();
+renderDecks();
+renderDoubtHistory();
+document.getElementById('todo-new-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('event-date').value=new Date().toISOString().slice(0,10);
+if(window.innerWidth<=700)document.getElementById('sidebar').classList.remove('collapsed');
+
+// Patch openModal for multi-quiz list
+const _origOpen=window.openModal;
+window.openModal=function(id){
+  if(id==='modal-multi-quiz'){
+    document.getElementById('multi-deck-list').innerHTML=decks.map(d=>`
+      <div class="deck-check-row">
+        <input type="checkbox" class="multi-deck-cb" value="${d.id}" ${!d.cards.length?'disabled':''}/>
+        <span style="flex:1;font-size:14px;font-weight:600">${esc(d.name)}</span>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${d.cards.length} cards</span>
+      </div>
+    `).join('');
+  }
+  _origOpen(id);
+};
+</script>
+</body>
+</html>
